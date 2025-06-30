@@ -61,7 +61,7 @@ const translations = {
     "footer.tagline":
       "Your mental health matters. We're here to support you every step of the way.",
     "footer.disclaimer":
-      "© 2025 MindWell. All rights reserved. This platform is for informational purposes and does not replace professional medical advice.",
+      "© 2025 Quan Nguyen. All rights reserved. This platform is for informational purposes and does not replace professional medical advice.",
   },
   vi: {
     // Navbar
