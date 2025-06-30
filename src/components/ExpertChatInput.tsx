@@ -1,29 +1,37 @@
-
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Send, Square, Paperclip, Smile } from 'lucide-react';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Send, Square, Paperclip, Smile } from "lucide-react";
 
 interface ExpertChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   expertName: string;
   onStop?: () => void;
+  isSocketConnected?: boolean;
+  connectionError?: string | null;
 }
 
-const ExpertChatInput = ({ onSendMessage, isLoading, expertName, onStop }: ExpertChatInputProps) => {
-  const [message, setMessage] = useState('');
+const ExpertChatInput = ({
+  onSendMessage,
+  isLoading,
+  expertName,
+  onStop,
+  isSocketConnected = false,
+  connectionError = null,
+}: ExpertChatInputProps) => {
+  const [message, setMessage] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (message.trim() && !isLoading) {
       onSendMessage(message.trim());
-      setMessage('');
+      setMessage("");
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit(e);
     }
@@ -33,7 +41,7 @@ const ExpertChatInput = ({ onSendMessage, isLoading, expertName, onStop }: Exper
     "Tôi cần lời khuyên về...",
     "Tôi đang gặp khó khăn với...",
     "Bạn có thể giúp tôi hiểu về...",
-    "Tôi muốn cải thiện..."
+    "Tôi muốn cải thiện...",
   ];
 
   return (
@@ -86,7 +94,7 @@ const ExpertChatInput = ({ onSendMessage, isLoading, expertName, onStop }: Exper
               </Button>
             </div>
           </div>
-          
+
           {isLoading ? (
             <Button
               type="button"
@@ -107,13 +115,26 @@ const ExpertChatInput = ({ onSendMessage, isLoading, expertName, onStop }: Exper
             </Button>
           )}
         </form>
-        
+
         <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
           <span>Nhấn Enter để gửi, Shift + Enter để xuống dòng</span>
-          <span className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-            <span>{expertName} đang trực tuyến</span>
-          </span>
+          <div className="flex items-center space-x-3">
+            <span className="flex items-center space-x-1">
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  isSocketConnected ? "bg-green-400" : "bg-red-400"
+                }`}
+              ></div>
+              <span>
+                {isSocketConnected ? "Socket kết nối" : "Socket ngắt kết nối"}
+              </span>
+            </span>
+            {connectionError && (
+              <span className="text-red-500 text-xs">
+                Lỗi: {connectionError}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>
