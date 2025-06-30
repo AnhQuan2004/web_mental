@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import ChatMessage from "@/components/ChatMessage";
 import ChatInput from "@/components/ChatInput";
@@ -18,12 +19,17 @@ const AIAssistant = () => {
     selectSession,
     deleteSession,
   } = useGeminiChat();
-
+  const navigate = useNavigate();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    loadSessions();
-  }, [loadSessions]);
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+    } else {
+      loadSessions();
+    }
+  }, [loadSessions, navigate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

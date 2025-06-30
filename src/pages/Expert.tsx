@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import ChatMessage from "@/components/ChatMessage";
 import ExpertChatInput from "@/components/ExpertChatInput";
@@ -30,6 +31,14 @@ const Expert = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   // Socket.IO integration
   const { isConnected, connectionError, sendMessage } = useExpertSocket({

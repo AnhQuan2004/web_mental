@@ -1,9 +1,8 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Brain, FileText, Users, UserCheck, LogOut, User } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 
@@ -11,8 +10,13 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
-  const { user, logout, isAuthenticated } = useAuth();
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    setIsAuthenticated(!!token);
+  }, [location]);
+
   const navItems = [
     { name: t('nav.aiAssistant'), path: '/ai-assistant', icon: Brain },
     { name: t('nav.questionnaire'), path: '/questionnaire', icon: FileText },
@@ -21,7 +25,8 @@ const Navbar = () => {
   ];
 
   const handleLogout = () => {
-    logout();
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
     navigate('/');
   };
 
@@ -69,10 +74,6 @@ const Navbar = () => {
             <LanguageSwitcher />
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
-                <div className="flex items-center space-x-1 text-sm text-gray-600">
-                  <User className="w-4 h-4" />
-                  <span>{user?.name || user?.email}</span>
-                </div>
                 <Button
                   variant="outline"
                   size="sm"

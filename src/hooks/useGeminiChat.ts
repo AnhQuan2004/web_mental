@@ -74,7 +74,7 @@ Mức độ đề nghị: Lo âu và trầm cảm ở mức độ vừa.
 Bây giờ, hãy bắt đầu cuộc trò chuyện.`;
 
 // Hardcoded API key
-const GEMINI_API_KEY = 'AIzaSyB6yBq68qb-HAJiM7AUq0Kj_LwCiRlif58';
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export const useGeminiChat = () => {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -85,11 +85,11 @@ export const useGeminiChat = () => {
   const loadSessions = useCallback(() => {
     const savedSessions = localStorage.getItem('chat_sessions');
     if (savedSessions) {
-      const parsed = JSON.parse(savedSessions).map((session: any) => ({
+      const parsed = JSON.parse(savedSessions).map((session: ChatSession) => ({
         ...session,
         createdAt: new Date(session.createdAt),
         updatedAt: new Date(session.updatedAt),
-        messages: session.messages.map((msg: any) => ({
+        messages: session.messages.map((msg: ChatMessage) => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
         }))
