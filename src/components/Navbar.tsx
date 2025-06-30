@@ -17,10 +17,11 @@ const Navbar = () => {
     setIsAuthenticated(!!token);
   }, [location]);
 
+  const role = localStorage.getItem("role");
   const navItems = [
     { name: t('nav.aiAssistant'), path: '/ai-assistant', icon: Brain },
     { name: t('nav.questionnaire'), path: '/questionnaire', icon: FileText },
-    { name: t('nav.expert'), path: '/expert', icon: Users },
+    { name: t('nav.expert'), path: role === 'expert' ? '/expert' : '/chat', icon: Users },
     { name: t('nav.expertProfile'), path: '/expert-profile', icon: UserCheck },
   ];
 

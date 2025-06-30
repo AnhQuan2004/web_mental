@@ -1,7 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const API_BASE_URL = 'http://13.229.93.67:3000/api';
+const API_BASE_URL = "http://13.229.93.67:3000/api";
 
 interface LoginData {
   email?: string;
@@ -23,9 +23,9 @@ export const useAuth = () => {
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -33,17 +33,22 @@ export const useAuth = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || 'Login failed');
+        throw new Error(result.message || "Login failed");
       }
 
       // Assuming the API returns a token
       localStorage.setItem('token', result.token);
+
+      // Determine and store user role
+      const role = data.email?.endsWith('@expert.com') ? 'expert' : 'user';
+      localStorage.setItem('role', role);
+
       navigate('/'); // Redirect to home page after login
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unknown error occurred');
+        setError("An unknown error occurred");
       }
     } finally {
       setIsLoading(false);
@@ -55,9 +60,9 @@ export const useAuth = () => {
     setError(null);
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
@@ -65,7 +70,7 @@ export const useAuth = () => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.message || 'Registration failed');
+        throw new Error(result.message || "Registration failed");
       }
 
       // Automatically log in after successful registration
@@ -74,7 +79,7 @@ export const useAuth = () => {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('An unknown error occurred');
+        setError("An unknown error occurred");
       }
     } finally {
       setIsLoading(false);

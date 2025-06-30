@@ -5,15 +5,14 @@ interface SocketMessage {
   role: "user" | "expert";
   msg: string;
   timestamp?: Date;
+  sessionId: string;
 }
 
 interface UseExpertSocketProps {
-  role: "user" | "expert";
   onMessageReceived?: (message: SocketMessage) => void;
 }
 
 export const useExpertSocket = ({
-  role,
   onMessageReceived,
 }: UseExpertSocketProps) => {
   const [socket, setSocket] = useState<Socket | null>(null);
@@ -21,8 +20,10 @@ export const useExpertSocket = ({
   const [connectionError, setConnectionError] = useState<string | null>(null);
 
   useEffect(() => {
+    const role = localStorage.getItem("role") || "user";
     // Create socket connection
-    const socketUrl = import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
+    const socketUrl =
+      import.meta.env.VITE_SOCKET_URL || "http://localhost:5000";
     const newSocket = io(socketUrl, {
       query: { role },
       forceNew: true,
@@ -52,6 +53,10 @@ export const useExpertSocket = ({
     // Listen for chat messages
     newSocket.on("chat message", (data: SocketMessage) => {
       console.log("Received message:", data);
+      const role = localStorage.getItem("role") || "user";
+      if (role === "expert" && data.role === "expert") {
+        return;
+      }
       if (onMessageReceived) {
         onMessageReceived({
           ...data,
@@ -69,11 +74,13 @@ export const useExpertSocket = ({
   }, []);
 
   const sendMessage = useCallback(
-    (message: string) => {
+    (message: string, sessionId?: string) => {
       if (socket && isConnected && message.trim()) {
+        const role = localStorage.getItem("role") || "user";
         const messageData = {
           role,
           msg: message.trim(),
+          sessionId: role === "user" ? socket.id : sessionId,
         };
 
         socket.emit("chat message", messageData);
@@ -82,7 +89,7 @@ export const useExpertSocket = ({
       }
       return false;
     },
-    [socket, isConnected, role]
+    [socket, isConnected]
   );
 
   const disconnect = useCallback(() => {

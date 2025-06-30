@@ -3,15 +3,16 @@ import { User, Brain } from "lucide-react";
 
 interface ChatMessageProps {
   message: {
-    id: string;
+    id:string;
     content: string;
     role: "user" | "assistant";
     timestamp: Date;
   };
+  isExpertView?: boolean;
 }
 
-const ChatMessage = ({ message }: ChatMessageProps) => {
-  const isUser = message.role === "user";
+const ChatMessage = ({ message, isExpertView = false }: ChatMessageProps) => {
+  const isUser = isExpertView ? message.role === "assistant" : message.role === "user";
 
   return (
     <div

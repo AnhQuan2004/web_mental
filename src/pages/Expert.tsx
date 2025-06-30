@@ -4,6 +4,7 @@ import Navbar from "@/components/Navbar";
 import ChatMessage from "@/components/ChatMessage";
 import ExpertChatInput from "@/components/ExpertChatInput";
 import ExpertSelector from "@/components/ExpertSelector";
+import SessionSidebar from "@/components/SessionSidebar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Users, Brain, Heart, Shield, Clock, Star } from "lucide-react";
@@ -26,12 +27,60 @@ interface ChatMessage {
   expertName?: string;
 }
 
+interface SocketMessage {
+  role: "user" | "expert";
+  msg: string;
+  timestamp?: Date;
+  sessionId: string;
+}
+
+interface Session {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  lastMessage: string;
+  updatedAt: Date;
+}
+
 const Expert = () => {
   const [selectedExpert, setSelectedExpert] = useState<Expert | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const role = localStorage.getItem("role");
+  const currentSessionRef = useRef(currentSession);
+
+  useEffect(() => {
+    currentSessionRef.current = currentSession;
+  }, [currentSession]);
+
+  // Load sessions from localStorage on mount
+  useEffect(() => {
+    if (role === 'expert') {
+      const savedSessions = localStorage.getItem('expert_chat_sessions');
+      if (savedSessions) {
+        const parsed = JSON.parse(savedSessions).map((session: Session) => ({
+          ...session,
+          updatedAt: new Date(session.updatedAt),
+          messages: session.messages.map((msg: ChatMessage) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        }));
+        setSessions(parsed);
+      }
+    }
+  }, [role]);
+
+  // Save sessions to localStorage whenever they change
+  useEffect(() => {
+    if (role === 'expert' && sessions.length > 0) {
+      localStorage.setItem('expert_chat_sessions', JSON.stringify(sessions));
+    }
+  }, [sessions, role]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -42,18 +91,64 @@ const Expert = () => {
 
   // Socket.IO integration
   const { isConnected, connectionError, sendMessage } = useExpertSocket({
-    role: "user",
-    onMessageReceived: (socketMessage) => {
-      // Convert socket message to ChatMessage format
-      if (socketMessage.role === "expert") {
-        const newMessage: ChatMessage = {
-          id: Date.now().toString(),
-          content: socketMessage.msg,
-          role: "assistant",
-          timestamp: socketMessage.timestamp || new Date(),
-          expertName: selectedExpert?.name || "Chuyên gia",
-        };
-        setMessages((prev) => [...prev, newMessage]);
+    onMessageReceived: (socketMessage: SocketMessage) => {
+      if (role === "expert") {
+        // Logic for expert receiving a message
+        setSessions(prevSessions => {
+          const sessionToUpdate = prevSessions.find(
+            (s) => s.id === socketMessage.sessionId
+          );
+          if (sessionToUpdate) {
+            const newMessage: ChatMessage = {
+              id: Date.now().toString(),
+              content: socketMessage.msg,
+              role: "user",
+              timestamp: socketMessage.timestamp || new Date(),
+            };
+            const updatedSession = {
+              ...sessionToUpdate,
+              messages: [...sessionToUpdate.messages, newMessage],
+              lastMessage: socketMessage.msg,
+              updatedAt: new Date(),
+            };
+            const newSessions = prevSessions.map((s) =>
+                s.id === socketMessage.sessionId ? updatedSession : s
+              );
+            if (currentSessionRef.current?.id === socketMessage.sessionId) {
+              setCurrentSession(updatedSession);
+            }
+            return newSessions;
+          } else {
+            // Create a new session if it doesn't exist
+            const newSession: Session = {
+              id: socketMessage.sessionId,
+              title: `User ${socketMessage.sessionId.slice(0, 4)}`,
+              messages: [
+                {
+                  id: Date.now().toString(),
+                  content: socketMessage.msg,
+                  role: "user",
+                  timestamp: socketMessage.timestamp || new Date(),
+                },
+              ],
+              lastMessage: socketMessage.msg,
+              updatedAt: new Date(),
+            };
+            return [newSession, ...prevSessions];
+          }
+        });
+      } else {
+        // Logic for user receiving a message
+        if (socketMessage.role === "expert") {
+          const newMessage: ChatMessage = {
+            id: Date.now().toString(),
+            content: socketMessage.msg,
+            role: "assistant",
+            timestamp: socketMessage.timestamp || new Date(),
+            expertName: selectedExpert?.name || "Chuyên gia",
+          };
+          setMessages((prev) => [...prev, newMessage]);
+        }
       }
     },
   });
@@ -87,28 +182,50 @@ const Expert = () => {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, currentSession]);
 
   const handleSendMessage = async (content: string) => {
-    if (!selectedExpert) return;
-
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content,
-      role: "user",
-      timestamp: new Date(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-
-    // Send message via Socket.IO
-    if (isConnected) {
-      const success = sendMessage(content);
-      if (!success) {
-        console.error("Failed to send message via socket");
-      }
+    if (role === "expert") {
+      if (!currentSession) return;
+      const expertMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content,
+        role: "assistant",
+        timestamp: new Date(),
+        expertName: "Expert",
+      };
+      const updatedSession = {
+        ...currentSession,
+        messages: [...currentSession.messages, expertMessage],
+        lastMessage: content,
+        updatedAt: new Date(),
+      };
+      setSessions(prevSessions =>
+        prevSessions.map((s) => (s.id === currentSession.id ? updatedSession : s))
+      );
+      setCurrentSession(updatedSession);
+      sendMessage(content, currentSession.id);
     } else {
-      console.warn("Socket not connected, cannot send message");
+      if (!selectedExpert) return;
+
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content,
+        role: "user",
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+
+      // Send message via Socket.IO
+      if (isConnected) {
+        const success = sendMessage(content);
+        if (!success) {
+          console.error("Failed to send message via socket");
+        }
+      } else {
+        console.warn("Socket not connected, cannot send message");
+      }
     }
   };
 
@@ -152,14 +269,30 @@ const Expert = () => {
       )}
 
       <div className="flex h-[calc(100vh-64px)] relative z-10">
-        <ExpertSelector
-          experts={experts}
-          selectedExpert={selectedExpert}
-          onSelectExpert={handleSelectExpert}
-        />
+        {role === "expert" ? (
+          <SessionSidebar
+            sessions={sessions}
+            currentSession={currentSession}
+            onNewChat={() => {
+              /* For experts, new chats are initiated by users */
+            }}
+            onSelectSession={(sessionId) => {
+              const session = sessions.find((s) => s.id === sessionId);
+              if (session) {
+                setCurrentSession(session);
+              }
+            }}
+          />
+        ) : (
+          <ExpertSelector
+            experts={experts}
+            selectedExpert={selectedExpert}
+            onSelectExpert={handleSelectExpert}
+          />
+        )}
 
         <div className="flex-1 flex flex-col">
-          {selectedExpert ? (
+          {selectedExpert || currentSession ? (
             <>
               {/* Expert Header */}
               <div className="bg-white/90 backdrop-blur-sm border-b border-blue-100 p-6 shadow-sm">
@@ -167,11 +300,13 @@ const Expert = () => {
                   <div className="flex items-center space-x-4">
                     <div className="relative">
                       <div className="w-14 h-14 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center text-2xl shadow-lg">
-                        {selectedExpert.avatar}
+                        {role === "expert"
+                          ? "U"
+                          : selectedExpert?.avatar}
                       </div>
                       <div
                         className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white shadow-sm ${
-                          selectedExpert.isOnline
+                          isConnected
                             ? "bg-emerald-400"
                             : "bg-amber-400"
                         }`}
@@ -179,89 +314,15 @@ const Expert = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-bold text-gray-800">
-                        {selectedExpert.name}
+                        {role === "expert"
+                          ? currentSession?.title
+                          : selectedExpert?.name}
                       </h3>
                       <p className="text-blue-600 font-medium">
-                        {selectedExpert.specialty}
+                        {role === "expert"
+                          ? "User"
+                          : selectedExpert?.specialty}
                       </p>
-                      <div className="flex items-center space-x-3 mt-2">
-                        <Badge
-                          variant={
-                            selectedExpert.isOnline ? "default" : "secondary"
-                          }
-                          className={`${
-                            selectedExpert.isOnline
-                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                              : "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                          }`}
-                        >
-                          <div
-                            className={`w-2 h-2 rounded-full mr-2 ${
-                              selectedExpert.isOnline
-                                ? "bg-emerald-500"
-                                : "bg-amber-500"
-                            }`}
-                          ></div>
-                          {selectedExpert.isOnline
-                            ? "Đang trực tuyến"
-                            : "Offline"}
-                        </Badge>
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="w-4 h-4 mr-1" />
-                            <span>
-                              Phản hồi trong {selectedExpert.responseTime}
-                            </span>
-                          </div>
-                          <div className="flex items-center text-sm">
-                            <div
-                              className={`w-2 h-2 rounded-full mr-2 ${
-                                isConnected ? "bg-green-500" : "bg-red-500"
-                              }`}
-                            ></div>
-                            <span
-                              className={
-                                isConnected ? "text-green-600" : "text-red-600"
-                              }
-                            >
-                              {isConnected
-                                ? "Socket kết nối"
-                                : "Socket ngắt kết nối"}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expert Stats */}
-                  <div className="hidden md:flex items-center space-x-6">
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full mb-1">
-                        <Star className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div className="text-sm font-semibold text-gray-800">
-                        4.9
-                      </div>
-                      <div className="text-xs text-gray-600">Đánh giá</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-10 h-10 bg-emerald-100 rounded-full mb-1">
-                        <Users className="w-5 h-5 text-emerald-600" />
-                      </div>
-                      <div className="text-sm font-semibold text-gray-800">
-                        500+
-                      </div>
-                      <div className="text-xs text-gray-600">Tư vấn</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="flex items-center justify-center w-10 h-10 bg-purple-100 rounded-full mb-1">
-                        <Shield className="w-5 h-5 text-purple-600" />
-                      </div>
-                      <div className="text-sm font-semibold text-gray-800">
-                        5+
-                      </div>
-                      <div className="text-xs text-gray-600">Năm KN</div>
                     </div>
                   </div>
                 </div>
@@ -271,8 +332,15 @@ const Expert = () => {
               <div className="flex-1 overflow-hidden bg-gradient-to-b from-blue-25 to-cyan-25">
                 <ScrollArea className="h-full">
                   <div className="p-6 space-y-6">
-                    {messages.map((message) => (
-                      <ChatMessage key={message.id} message={message} />
+                    {(role === "expert"
+                      ? currentSession?.messages
+                      : messages
+                    )?.map((message) => (
+                      <ChatMessage
+                        key={message.id}
+                        message={message}
+                        isExpertView={role === "expert"}
+                      />
                     ))}
                     {isLoading && (
                       <div className="flex justify-start mb-4">
@@ -306,7 +374,11 @@ const Expert = () => {
                 <ExpertChatInput
                   onSendMessage={handleSendMessage}
                   isLoading={isLoading}
-                  expertName={selectedExpert.name}
+                  expertName={
+                    role === "expert"
+                      ? "Expert"
+                      : selectedExpert?.name
+                  }
                   isSocketConnected={isConnected}
                   connectionError={connectionError}
                 />
@@ -325,75 +397,15 @@ const Expert = () => {
                 </div>
 
                 <h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">
-                  Chọn chuyên gia tư vấn
+                  {role === "expert"
+                    ? "Select a session"
+                    : "Chọn chuyên gia tư vấn"}
                 </h3>
                 <p className="text-gray-600 text-lg mb-8 leading-relaxed">
-                  Chọn một chuyên gia từ danh sách bên trái để bắt đầu cuộc trò
-                  chuyện 1:1. Họ sẽ hỗ trợ bạn với những lời khuyên chuyên môn
-                  và kinh nghiệm thực tế.
+                  {role === "expert"
+                    ? "Select a session from the left to start chatting."
+                    : "Chọn một chuyên gia từ danh sách bên trái để bắt đầu cuộc trò chuyện 1:1. Họ sẽ hỗ trợ bạn với những lời khuyên chuyên môn và kinh nghiệm thực tế."}
                 </p>
-
-                {/* Feature highlights */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-blue-100 shadow-sm">
-                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Shield className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <h4 className="font-semibold text-gray-800 mb-2">
-                      An toàn & Bảo mật
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Cuộc trò chuyện được mã hóa và bảo mật tuyệt đối
-                    </p>
-                  </div>
-
-                  <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-blue-100 shadow-sm">
-                    <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Brain className="w-6 h-6 text-emerald-600" />
-                    </div>
-                    <h4 className="font-semibold text-gray-800 mb-2">
-                      Chuyên gia giàu kinh nghiệm
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Đội ngũ chuyên gia có chứng chỉ hành nghề
-                    </p>
-                  </div>
-
-                  <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-blue-100 shadow-sm">
-                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Clock className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <h4 className="font-semibold text-gray-800 mb-2">
-                      Phản hồi nhanh chóng
-                    </h4>
-                    <p className="text-sm text-gray-600">
-                      Nhận được hỗ trợ trong vòng vài phút
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border border-blue-200 rounded-2xl p-6">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Heart className="w-4 h-4 text-blue-600" />
-                    </div>
-                    <div className="text-left">
-                      <h4 className="font-semibold text-blue-900 mb-2">
-                        💡 Mẹo để có buổi tư vấn hiệu quả:
-                      </h4>
-                      <ul className="text-sm text-blue-800 space-y-1">
-                        <li>• Mô tả rõ ràng vấn đề bạn đang gặp phải</li>
-                        <li>
-                          • Chia sẻ cảm xúc và suy nghĩ một cách thành thật
-                        </li>
-                        <li>
-                          • Đặt câu hỏi cụ thể để nhận được lời khuyên phù hợp
-                        </li>
-                        <li>• Ghi chú lại những lời khuyên quan trọng</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           )}
