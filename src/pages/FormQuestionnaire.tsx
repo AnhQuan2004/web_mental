@@ -8,6 +8,9 @@ import {
   Brain,
   Users,
   Calendar,
+  Clock,
+  Target,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,374 +18,19 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import Navbar from "@/components/Navbar";
-
-const questions = [
-  {
-    id: 1,
-    question: "Tôi cảm thấy khó thư giãn",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 2,
-    question: "Tôi nhận thấy miệng mình bị khô",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 3,
-    question: "Tôi không thể cảm thấy bất kỳ cảm xúc tích cực nào",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 4,
-    question:
-      "Tôi cảm thấy khó thở (ví dụ: thở gấp hoặc hụt hơi dù không vận động)",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 5,
-    question: "Tôi cảm thấy khó có động lực để làm việc gì đó",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 6,
-    question: "Tôi có xu hướng phản ứng quá mức với tình huống",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 7,
-    question: "Tôi cảm thấy run rẩy (ví dụ: run tay)",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 8,
-    question: "Tôi cảm thấy mình đang tiêu tốn rất nhiều năng lượng vì lo lắng",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 9,
-    question:
-      "Tôi lo lắng về các tình huống có thể khiến tôi hoảng loạn và xấu hổ",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 10,
-    question: "Tôi cảm thấy không còn điều gì đáng mong đợi trong cuộc sống",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 11,
-    question: "Tôi thường xuyên cảm thấy bồn chồn, kích động",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 12,
-    question: "Tôi cảm thấy khó thư giãn",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 13,
-    question: "Tôi cảm thấy buồn bã và u sầu",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 14,
-    question: "Tôi cảm thấy khó chịu khi bị ngăn cản làm điều mình đang làm",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 15,
-    question: "Tôi cảm thấy gần như hoảng loạn",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 16,
-    question: "Tôi không thể hứng thú với bất kỳ điều gì",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 17,
-    question: "Tôi cảm thấy bản thân không có giá trị",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 18,
-    question: "Tôi cảm thấy nhạy cảm và dễ bị kích động",
-    category: "stress",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 19,
-    question:
-      "Tôi cảm nhận được tim mình đập nhanh hoặc bỏ nhịp dù không vận động",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 20,
-    question: "Tôi cảm thấy sợ hãi mà không rõ lý do",
-    category: "anxiety",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-  {
-    id: 21,
-    question: "Tôi cảm thấy cuộc sống vô nghĩa",
-    category: "depression",
-    options: [
-      { value: "0", label: "Không đúng với tôi chút nào" },
-      {
-        value: "1",
-        label: "Đúng với tôi ở một mức độ nào đó, hoặc thỉnh thoảng",
-      },
-      {
-        value: "2",
-        label: "Đúng với tôi ở mức độ khá nhiều hoặc thường xuyên",
-      },
-      { value: "3", label: "Rất đúng với tôi hoặc xảy ra hầu hết thời gian" },
-    ],
-  },
-];
+import {
+  questionDomains,
+  getQuestionsForDomain,
+  type Question,
+  type QuestionDomain,
+} from "@/data/questions";
 
 const FormQuestionnaire = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [showDomainSelection, setShowDomainSelection] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -392,14 +40,202 @@ const FormQuestionnaire = () => {
     }
   }, [navigate]);
 
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const handleDomainSelect = (domainId: string) => {
+    setSelectedDomain(domainId);
+    setShowDomainSelection(false);
+    // Reset questionnaire state when domain changes
+    setCurrentQuestion(0);
+    setAnswers({});
+    setIsCompleted(false);
+  };
+
+  const backToDomainSelection = () => {
+    setShowDomainSelection(true);
+    setSelectedDomain(null);
+    setCurrentQuestion(0);
+    setAnswers({});
+    setIsCompleted(false);
+  };
+
+  // Domain Selection Screen
+  if (showDomainSelection) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 relative">
+        {/* Background decoration */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-20 left-10 w-32 h-32 bg-blue-200 rounded-full blur-3xl opacity-20"></div>
+          <div className="absolute top-40 right-20 w-24 h-24 bg-cyan-200 rounded-full blur-2xl opacity-20"></div>
+          <div className="absolute bottom-20 left-1/3 w-40 h-40 bg-sky-200 rounded-full blur-3xl opacity-20"></div>
+        </div>
+
+        <Navbar />
+        <div className="max-w-6xl mx-auto px-4 py-6 relative z-10">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Heart className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+              Chọn loại bài test phù hợp
+            </h1>
+            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+              Hãy chọn bài test phù hợp với tình trạng và nhu cầu của bạn để có
+              được kết quả đánh giá chính xác nhất
+            </p>
+          </div>
+
+          {/* Domain Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+            {questionDomains.map((domain) => (
+              <Card
+                key={domain.id}
+                className="shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+              >
+                <CardContent className="p-0">
+                  {/* Header with badge */}
+                  <div className="relative">
+                    <div
+                      className={`bg-gradient-to-r ${domain.bgGradient} p-6 rounded-t-lg`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2 pr-4">
+                            {domain.title}
+                          </h3>
+                        </div>
+                        <div className="flex-shrink-0">
+                          {domain.iconType === "FileText" && (
+                            <FileText
+                              className={`w-8 h-8 text-${domain.color}-600`}
+                            />
+                          )}
+                          {domain.iconType === "Brain" && (
+                            <Brain
+                              className={`w-8 h-8 text-${domain.color}-600`}
+                            />
+                          )}
+                          {domain.iconType === "Heart" && (
+                            <Heart
+                              className={`w-8 h-8 text-${domain.color}-600`}
+                            />
+                          )}
+                          {domain.iconType === "Target" && (
+                            <Target
+                              className={`w-8 h-8 text-${domain.color}-600`}
+                            />
+                          )}
+                          {domain.iconType === "Clock" && (
+                            <Clock
+                              className={`w-8 h-8 text-${domain.color}-600`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-6">
+                    <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                      {domain.description}
+                    </p>
+
+                    {/* Features */}
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center text-sm">
+                        <div className="w-2 h-2 bg-gray-800 rounded-full mr-3"></div>
+                        <span className="font-medium text-gray-700">
+                          Câu hỏi:
+                        </span>
+                        <span className="text-gray-600 ml-1">
+                          {domain.questionCount} câu hỏi.
+                        </span>
+                      </div>
+                      <div className="flex items-start text-sm">
+                        <div className="w-2 h-2 bg-gray-800 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Đối tượng:
+                          </span>
+                          <span className="text-gray-600 ml-1">
+                            {domain.targetAudience}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex items-start text-sm">
+                        <div className="w-2 h-2 bg-gray-800 rounded-full mr-3 mt-2 flex-shrink-0"></div>
+                        <div>
+                          <span className="font-medium text-gray-700">
+                            Mục đích:
+                          </span>
+                          <span className="text-gray-600 ml-1">
+                            {domain.purpose}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <Button
+                      onClick={() => handleDomainSelect(domain.id)}
+                      className={`w-full h-12 bg-gradient-to-r ${
+                        domain.color === "blue"
+                          ? "from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
+                          : domain.color === "purple"
+                          ? "from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
+                          : domain.color === "emerald"
+                          ? "from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+                          : domain.color === "amber"
+                          ? "from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
+                          : domain.color === "red"
+                          ? "from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                          : "from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700"
+                      } text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300`}
+                    >
+                      Làm bài test
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Info Section */}
+          <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-2xl border border-blue-100">
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-gray-800 mb-2 flex items-center justify-center">
+                <Target className="w-5 h-5 text-blue-600 mr-2" />
+                Lưu ý khi làm bài test
+              </h3>
+              <p className="text-gray-600 text-sm max-w-4xl mx-auto">
+                Hãy trả lời thành thật và dựa trên cảm nhận của bạn trong{" "}
+                <strong>2 tuần gần đây</strong>. Kết quả sẽ giúp chúng tôi đưa
+                ra những gợi ý và hỗ trợ phù hợp nhất cho tình trạng của bạn.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Get current domain questions based on selected domain
+  const currentDomainQuestions = selectedDomain
+    ? getQuestionsForDomain(selectedDomain)
+    : [];
+
+  const progress =
+    ((currentQuestion + 1) / currentDomainQuestions.length) * 100;
 
   const handleAnswer = (value: string) => {
-    setAnswers({ ...answers, [questions[currentQuestion].id]: value });
+    setAnswers({
+      ...answers,
+      [currentDomainQuestions[currentQuestion].id]: value,
+    });
   };
 
   const nextQuestion = () => {
-    if (currentQuestion < questions.length - 1) {
+    if (currentQuestion < currentDomainQuestions.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setIsCompleted(true);
@@ -542,6 +378,9 @@ const FormQuestionnaire = () => {
   if (isCompleted) {
     const scores = getScores();
     const recommendation = getRecommendation(scores);
+    const selectedDomainInfo = questionDomains.find(
+      (d) => d.id === selectedDomain
+    );
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 relative">
@@ -563,7 +402,7 @@ const FormQuestionnaire = () => {
                 Đánh giá hoàn tất
               </CardTitle>
               <p className="text-gray-600 text-sm">
-                Cảm ơn bạn đã hoàn thành bài đánh giá sức khỏe tinh thần
+                Cảm ơn bạn đã hoàn thành {selectedDomainInfo?.title}
               </p>
             </CardHeader>
 
@@ -698,13 +537,21 @@ const FormQuestionnaire = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Button
+                  onClick={backToDomainSelection}
+                  variant="outline"
+                  className="h-12 border-2 border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Làm bài test khác
+                </Button>
                 <Button
                   onClick={() => (window.location.href = "/ai-assistant")}
                   className="h-12 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Brain className="w-4 h-4 mr-2" />
-                  Trò chuyện với AI Assistant
+                  Trò chuyện với AI
                 </Button>
                 <Button
                   onClick={() => (window.location.href = "/expert")}
@@ -712,7 +559,7 @@ const FormQuestionnaire = () => {
                   className="h-12 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Calendar className="w-4 h-4 mr-2" />
-                  Đặt lịch với chuyên gia
+                  Đặt lịch chuyên gia
                 </Button>
               </div>
 
@@ -743,11 +590,22 @@ const FormQuestionnaire = () => {
       <div className="max-w-3xl mx-auto px-4 py-4 relative z-10 h-[calc(100vh-64px)] flex flex-col">
         {/* Header Section */}
         <div className="text-center mb-6">
-          <div className="w-14 h-14 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <Heart className="w-7 h-7 text-white" />
+          <div className="flex items-center justify-center mb-4">
+            <Button
+              onClick={backToDomainSelection}
+              variant="ghost"
+              className="mr-4 text-gray-600 hover:text-gray-800"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Chọn bài test khác
+            </Button>
+            <div className="w-14 h-14 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full flex items-center justify-center shadow-lg">
+              <Heart className="w-7 h-7 text-white" />
+            </div>
           </div>
           <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-1">
-            Đánh giá sức khỏe tinh thần
+            {questionDomains.find((d) => d.id === selectedDomain)?.title ||
+              "Đánh giá sức khỏe tinh thần"}
           </h1>
           <p className="text-gray-600 text-base">
             Hãy trả lời thành thật để chúng tôi có thể hỗ trợ bạn tốt nhất
@@ -758,7 +616,7 @@ const FormQuestionnaire = () => {
         <div className="mb-6">
           <div className="flex items-center justify-between mb-3">
             <span className="text-sm font-medium text-gray-600">
-              Câu hỏi {currentQuestion + 1} / {questions.length}
+              Câu hỏi {currentQuestion + 1} / {currentDomainQuestions.length}
             </span>
             <span className="text-sm font-medium text-blue-600">
               {Math.round(progress)}% hoàn thành
@@ -777,40 +635,44 @@ const FormQuestionnaire = () => {
           <CardContent className="p-6 flex-1 flex flex-col">
             <div className="mb-6">
               <h2 className="text-lg font-semibold text-gray-800 leading-relaxed">
-                {questions[currentQuestion].question}
+                {currentDomainQuestions[currentQuestion].question}
               </h2>
             </div>
 
             <RadioGroup
-              value={answers[questions[currentQuestion].id] || ""}
+              value={answers[currentDomainQuestions[currentQuestion].id] || ""}
               onValueChange={handleAnswer}
               className="space-y-3 flex-1"
             >
-              {questions[currentQuestion].options.map((option, index) => (
-                <div
-                  key={option.value}
-                  className={`group relative flex items-center space-x-3 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
-                    answers[questions[currentQuestion].id] === option.value
-                      ? "border-blue-400 bg-blue-50 shadow-md"
-                      : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-25"
-                  }`}
-                >
-                  <RadioGroupItem
-                    value={option.value}
-                    id={option.value}
-                    className="border-2 border-blue-300 text-blue-600"
-                  />
-                  <Label
-                    htmlFor={option.value}
-                    className="flex-1 cursor-pointer text-gray-700 font-medium group-hover:text-gray-800 transition-colors"
+              {currentDomainQuestions[currentQuestion].options.map(
+                (option, index) => (
+                  <div
+                    key={option.value}
+                    className={`group relative flex items-center space-x-3 p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-md ${
+                      answers[currentDomainQuestions[currentQuestion].id] ===
+                      option.value
+                        ? "border-blue-400 bg-blue-50 shadow-md"
+                        : "border-gray-200 bg-white hover:border-blue-200 hover:bg-blue-25"
+                    }`}
                   >
-                    {option.label}
-                  </Label>
-                  {answers[questions[currentQuestion].id] === option.value && (
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  )}
-                </div>
-              ))}
+                    <RadioGroupItem
+                      value={option.value}
+                      id={option.value}
+                      className="border-2 border-blue-300 text-blue-600"
+                    />
+                    <Label
+                      htmlFor={option.value}
+                      className="flex-1 cursor-pointer text-gray-700 font-medium group-hover:text-gray-800 transition-colors"
+                    >
+                      {option.label}
+                    </Label>
+                    {answers[currentDomainQuestions[currentQuestion].id] ===
+                      option.value && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    )}
+                  </div>
+                )
+              )}
             </RadioGroup>
 
             {/* Navigation */}
@@ -827,11 +689,11 @@ const FormQuestionnaire = () => {
 
               <Button
                 onClick={nextQuestion}
-                disabled={!answers[questions[currentQuestion].id]}
+                disabled={!answers[currentDomainQuestions[currentQuestion].id]}
                 className="flex items-center space-x-2 h-10 px-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl"
               >
                 <span>
-                  {currentQuestion === questions.length - 1
+                  {currentQuestion === currentDomainQuestions.length - 1
                     ? "Hoàn thành"
                     : "Tiếp theo"}
                 </span>
