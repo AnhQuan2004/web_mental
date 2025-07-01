@@ -18,14 +18,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import Navbar from "@/components/Navbar";
+import { postWithAuth } from "@/lib/api";
 import {
   questionDomains,
   getQuestionsForDomain,
   type Question,
   type QuestionDomain,
 } from "@/data/questions";
+import { useUser } from "@/hooks/useUser";
 
 const FormQuestionnaire = () => {
+  const { user } = useUser();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [isCompleted, setIsCompleted] = useState(false);
@@ -239,6 +242,7 @@ const FormQuestionnaire = () => {
       setCurrentQuestion(currentQuestion + 1);
     } else {
       setIsCompleted(true);
+      saveTestResult();
     }
   };
 
@@ -372,6 +376,35 @@ const FormQuestionnaire = () => {
           "Bạn có nguy cơ nghiêm trọng. Cần tìm kiếm hỗ trợ y tế ngay lập tức từ bác sĩ chuyên khoa hoặc trung tâm tâm lý.",
         details: { depression, anxiety, stress },
       };
+    }
+  };
+
+  const saveTestResult = async () => {
+    if (!user) return;
+
+    const scores = getScores();
+    const recommendation = getRecommendation(scores);
+    const selectedDomainInfo = questionDomains.find(
+      (d) => d.id === selectedDomain
+    );
+
+    const testResult = {
+      email: user.email,
+      domainId: selectedDomain,
+      domainTitle: selectedDomainInfo?.title,
+      depression: scores.depression,
+      anxiety: scores.anxiety,
+      stress: scores.stress,
+      total: scores.total,
+      level: recommendation.level,
+      message: recommendation.message,
+    };
+
+    try {
+      await postWithAuth("/quiz/result", testResult);
+      console.log("Test result saved successfully");
+    } catch (error) {
+      console.error("Failed to save test result:", error);
     }
   };
 

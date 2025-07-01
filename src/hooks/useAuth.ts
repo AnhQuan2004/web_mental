@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
-const API_BASE_URL = "http://13.229.93.67:3000/api";
+import { postWithAuth } from "@/lib/api";
 
 interface LoginData {
   email?: string;
@@ -22,28 +21,19 @@ export const useAuth = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Login failed");
-      }
+      const result = await postWithAuth("/login", data);
 
       // Assuming the API returns a token
-      localStorage.setItem('token', result.token);
+      localStorage.setItem("token", result.token);
+      if (data.email) {
+        localStorage.setItem("email", data.email);
+      }
 
       // Determine and store user role
-      const role = data.email?.endsWith('@expert.com') ? 'expert' : 'user';
-      localStorage.setItem('role', role);
+      const role = data.email?.endsWith("@expert.com") ? "expert" : "user";
+      localStorage.setItem("role", role);
 
-      navigate('/'); // Redirect to home page after login
+      navigate("/"); // Redirect to home page after login
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -59,19 +49,7 @@ export const useAuth = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Registration failed");
-      }
+      await postWithAuth("/register", data);
 
       // Automatically log in after successful registration
       await login({ email: data.email, password: data.password });

@@ -19,6 +19,7 @@ const translations = {
     "nav.questionnaire": "Form Questionnaire",
     "nav.expert": "1:1 with Expert",
     "nav.expertProfile": "Expert Profile",
+    "nav.userProfile": "User Profile",
 
     // Homepage
     "home.hero.title": "Your Mental Health",
@@ -69,6 +70,7 @@ const translations = {
     "nav.questionnaire": "Bảng Câu Hỏi",
     "nav.expert": "1:1 với Chuyên Gia",
     "nav.expertProfile": "Hồ Sơ Chuyên Gia",
+    "nav.userProfile": "Hồ Sơ Người Dùng",
 
     // Homepage
     "home.hero.title": "Hành Trình Sức Khỏe Tinh Thần",
@@ -111,14 +113,14 @@ const translations = {
     "footer.tagline":
       "Sức khỏe tinh thần của bạn rất quan trọng. Chúng tôi sẵn sàng hỗ trợ bạn từng bước.",
     "footer.disclaimer":
-      "© 2025 MindWell. Tất cả quyền được bảo lưu. Nền tảng này chỉ mang tính chất thông tin và không thay thế lời khuyên y tế chuyên nghiệp.",
+      "© 2025 Quan Nguyen. Tất cả quyền được bảo lưu. Nền tảng này chỉ mang tính chất thông tin và không thay thế lời khuyên y tế chuyên nghiệp.",
   },
 };
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [language, setLanguage] = useState<Language>("en");
+  const [language, setLanguage] = useState<Language>("vi");
 
   const t = (key: string): string => {
     return translations[language][key] || key;

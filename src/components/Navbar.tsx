@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Brain, FileText, Users, UserCheck, LogOut, User } from 'lucide-react';
@@ -75,6 +74,16 @@ const Navbar = () => {
             <LanguageSwitcher />
             {isAuthenticated ? (
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  asChild
+                  className="rounded-full"
+                >
+                  <Link to="/profile">
+                    <User className="w-5 h-5" />
+                  </Link>
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
