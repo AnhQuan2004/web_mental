@@ -36,6 +36,7 @@ interface SocketMessage {
 
 interface Session {
   id: string;
+  socketId: string;
   title: string;
   messages: ChatMessage[];
   lastMessage: string;
@@ -96,7 +97,7 @@ const Expert = () => {
         // Logic for expert receiving a message
         setSessions(prevSessions => {
           const sessionToUpdate = prevSessions.find(
-            (s) => s.id === socketMessage.sessionId
+            (s) => s.socketId === socketMessage.sessionId
           );
           if (sessionToUpdate) {
             const newMessage: ChatMessage = {
@@ -112,16 +113,17 @@ const Expert = () => {
               updatedAt: new Date(),
             };
             const newSessions = prevSessions.map((s) =>
-                s.id === socketMessage.sessionId ? updatedSession : s
+                s.socketId === socketMessage.sessionId ? updatedSession : s
               );
-            if (currentSessionRef.current?.id === socketMessage.sessionId) {
+            if (currentSessionRef.current?.socketId === socketMessage.sessionId) {
               setCurrentSession(updatedSession);
             }
             return newSessions;
           } else {
             // Create a new session if it doesn't exist
             const newSession: Session = {
-              id: socketMessage.sessionId,
+              id: Date.now().toString(),
+              socketId: socketMessage.sessionId,
               title: `User ${socketMessage.sessionId.slice(0, 4)}`,
               messages: [
                 {
@@ -184,6 +186,27 @@ const Expert = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, currentSession]);
 
+  const saveExpertConversationToAPI = async (sessionId: string, userMessage: string, botResponse: string) => {
+    const userEmail = localStorage.getItem("email");
+    try {
+      await fetch('http://13.229.93.67:3000/api/chat/append_chatexpert', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId: sessionId,
+          userMessage,
+          botResponse,
+          userEmail
+        }),
+      });
+      console.log('Expert conversation saved to API successfully');
+    } catch (error) {
+      console.error('Failed to save expert conversation to API:', error);
+    }
+  };
+
   const handleSendMessage = async (content: string) => {
     if (role === "expert") {
       if (!currentSession) return;
@@ -204,7 +227,9 @@ const Expert = () => {
         prevSessions.map((s) => (s.id === currentSession.id ? updatedSession : s))
       );
       setCurrentSession(updatedSession);
-      sendMessage(content, currentSession.id);
+      sendMessage(content, currentSession.socketId);
+      const userMessage = currentSession.messages.find(m => m.role === 'user')?.content || '';
+      saveExpertConversationToAPI(currentSession.id, userMessage, content);
     } else {
       if (!selectedExpert) return;
 
@@ -245,6 +270,21 @@ const Expert = () => {
     setMessages([welcomeMessage]);
   };
 
+  const handleAcceptSession = (sessionId: string) => {
+    const session = sessions.find((s) => s.id === sessionId);
+    if (session) {
+      setCurrentSession(session);
+    }
+  };
+
+  const handleRejectSession = (sessionId: string) => {
+    console.log("Rejected session:", sessionId);
+    setSessions(prevSessions => prevSessions.filter(s => s.id !== sessionId));
+    if (currentSession?.id === sessionId) {
+      setCurrentSession(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 relative">
       {/* Background decoration */}
@@ -282,6 +322,8 @@ const Expert = () => {
                 setCurrentSession(session);
               }
             }}
+            onAcceptSession={handleAcceptSession}
+            onRejectSession={handleRejectSession}
           />
         ) : (
           <ExpertSelector

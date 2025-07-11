@@ -72,12 +72,12 @@ const Index = () => {
     },
   ];
 
-  const stats = [
-    { number: "10,000+", label: "Người dùng tin tưởng", icon: Users },
-    { number: "50+", label: "Chuyên gia tâm lý", icon: Brain },
-    { number: "24/7", label: "Hỗ trợ liên tục", icon: Heart },
-    { number: "98%", label: "Đánh giá tích cực", icon: Star },
-  ];
+  // const stats = [
+  //   { number: "10,000+", label: "Người dùng tin tưởng", icon: Users },
+  //   { number: "50+", label: "Chuyên gia tâm lý", icon: Brain },
+  //   { number: "24/7", label: "Hỗ trợ liên tục", icon: Heart },
+  //   { number: "98%", label: "Đánh giá tích cực", icon: Star },
+  // ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 relative overflow-hidden">
@@ -115,7 +115,7 @@ const Index = () => {
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
               {t("home.hero.title")}
               <span className="block bg-gradient-to-r from-blue-600 via-sky-600 to-cyan-600 bg-clip-text text-transparent">
-                {t("home.hero.subtitle")}
+                {/* {t("home.hero.subtitle")} */}
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
@@ -126,6 +126,12 @@ const Index = () => {
               <Link to="/questionnaire">
                 <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-lg px-8 py-4 h-auto shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
                   {t("home.hero.startAssessment")}
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/expert">
+                <Button className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-lg px-8 py-4 h-auto shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1">
+                  {t("home.hero.startExpert")}
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
@@ -141,7 +147,7 @@ const Index = () => {
             </div>
 
             {/* Trust indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
               {stats.map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -156,13 +162,13 @@ const Index = () => {
                   </div>
                 );
               })}
-            </div>
+            </div> */}
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 relative z-10">
+      {/* <section className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="w-16 h-16 bg-gradient-to-r from-emerald-400 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -205,9 +211,29 @@ const Index = () => {
             })}
           </div>
         </div>
+      </section> */}
+
+      {/* New Section */}
+      <section className="py-20 relative z-10">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-4">
+            Báo Cáo Toàn Diện về Các Thang Đo Trầm Cảm tại Việt Nam: Nội Dung, Ứng Dụng và Phân Tích Chuyên Sâu
+            </h2>
+          </div>
+          <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+            <p>
+            Trong bối cảnh y tế hiện đại tại Việt Nam, các rối loạn sức khỏe tâm thần, đặc biệt là trầm cảm, đang ngày càng nhận được sự quan tâm đúng mức từ cả cộng đồng và giới chuyên môn.<sup>1</sup> Trầm cảm không chỉ ảnh hưởng sâu sắc đến chất lượng cuộc sống, khả năng làm việc, học tập của cá nhân mà còn tạo ra gánh nặng đáng kể cho gia đình và xã hội.<sup>2</sup> Việc chẩn đoán sớm, đánh giá chính xác mức độ và theo dõi hiệu quả điều trị là những yếu tố then chốt trong quản lý rối loạn này. Để đạt được mục tiêu đó, việc sử dụng các công cụ lượng giá tâm lý chuẩn hóa, có độ tin cậy và độ giá trị cao là yêu cầu bắt buộc.
+            </p>
+            <p>
+            Báo cáo này được biên soạn với mục đích cung cấp một tài liệu tham khảo chuyên sâu, tổng hợp và phân tích một cách có hệ thống các thang đo trầm cảm đang được ứng dụng rộng rãi tại các cơ sở y tế và trong các công trình nghiên cứu tại Việt Nam. Báo cáo sẽ đi sâu vào phân tích chi tiết các thang đo phổ biến cho người trưởng thành và các thang đo chuyên biệt cho các nhóm đối tượng đặc thù như người cao tuổi và thanh thiếu niên. Nội dung phân tích bao gồm lịch sử phát triển, mục đích sử dụng, nội dung chi tiết của từng thang đo, hướng dẫn chấm điểm và diễn giải kết quả, cũng như đánh giá các đặc tính tâm lý học (psychometric properties) dựa trên các nghiên cứu thẩm định trong và ngoài nước. Quan trọng hơn, báo cáo đặt các công cụ này trong bối cảnh thực tiễn của hệ thống y tế Việt Nam, đối chiếu với các hướng dẫn chẩn đoán và điều trị hiện hành của Bộ Y tế, nhằm mang lại một cái nhìn toàn diện và hữu ích cho các nhà lâm sàng, nhà nghiên cứu và sinh viên các khối ngành khoa học sức khỏe.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* Call to Action Section */}
+      {/*
       <section className="py-20 relative z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card className="border-0 shadow-2xl bg-gradient-to-r from-blue-500 via-sky-500 to-cyan-500 text-white overflow-hidden relative">
@@ -237,18 +263,19 @@ const Index = () => {
                   </Link>
                 </div>
               </div>
-
+*/}
               {/* Background decoration */}
+              {/*
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
               <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24"></div>
               <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-white/5 rounded-full -translate-x-16 -translate-y-16"></div>
             </CardContent>
           </Card>
         </div>
-      </section>
+      </section>*/}
 
       {/* Testimonials Section */}
-      <section className="py-20 relative z-10">
+      {/* <section className="py-20 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -303,7 +330,7 @@ const Index = () => {
             ))}
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       <footer className="bg-gradient-to-r from-gray-900 to-slate-800 text-white py-16 relative z-10">

@@ -50,6 +50,19 @@ const Navbar = () => {
               {navItems.map((item, index) => {
                 const Icon = item.icon;
                 const isActive = location.pathname === item.path;
+                const isDisabled = item.path === '/ai-assistant';
+
+                if (isDisabled) {
+                  return (
+                    <div
+                      key={item.name}
+                      className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium whitespace-nowrap text-gray-400 cursor-not-allowed`}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span>{item.name}</span>
+                    </div>
+                  );
+                }
                 
                 return (
                   <Link

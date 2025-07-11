@@ -62,7 +62,7 @@ const translations = {
     "footer.tagline":
       "Your mental health matters. We're here to support you every step of the way.",
     "footer.disclaimer":
-      "© 2025 Quan Nguyen. All rights reserved. This platform is for informational purposes and does not replace professional medical advice.",
+      "© 2025 Quan Nguyen(NLP Lab, TDTU). All rights reserved. This platform is for informational purposes and does not replace professional medical advice.",
   },
   vi: {
     // Navbar
@@ -73,8 +73,9 @@ const translations = {
     "nav.userProfile": "Hồ Sơ Người Dùng",
 
     // Homepage
-    "home.hero.title": "Hành Trình Sức Khỏe Tinh Thần",
-    "home.hero.subtitle": "Bắt Đầu Từ Đây",
+    "home.hero.startExpert": "Bắt Đầu Với Chuyên Gia",
+    "home.hero.title": "Sức Khỏe Tinh Thần",
+    // "home.hero.subtitle": "Bắt Đầu Từ Đây",
     "home.hero.description":
       "Kiểm soát sức khỏe tinh thần của bạn với nền tảng toàn diện của chúng tôi. Nhận hỗ trợ từ AI, đánh giá chuyên nghiệp và kết nối với các chuyên gia được cấp phép - tất cả trong một không gian an toàn.",
     "home.hero.startAssessment": "Bắt Đầu Đánh Giá",
@@ -113,7 +114,7 @@ const translations = {
     "footer.tagline":
       "Sức khỏe tinh thần của bạn rất quan trọng. Chúng tôi sẵn sàng hỗ trợ bạn từng bước.",
     "footer.disclaimer":
-      "© 2025 Quan Nguyen. Tất cả quyền được bảo lưu. Nền tảng này chỉ mang tính chất thông tin và không thay thế lời khuyên y tế chuyên nghiệp.",
+      "© 2025 Quan Nguyen(NLP Lab, TDTU). Tất cả quyền được bảo lưu. Nền tảng này chỉ mang tính chất thông tin và không thay thế lời khuyên y tế chuyên nghiệp.",
   },
 };
 
