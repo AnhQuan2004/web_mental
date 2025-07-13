@@ -10,6 +10,7 @@ interface LoginData {
 interface RegisterData extends LoginData {
   fullName?: string;
   confirmPassword?: string;
+  role?: string;
 }
 
 export const useAuth = () => {

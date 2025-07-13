@@ -11,6 +11,8 @@ import {
   Clock,
   Target,
   FileText,
+  Info,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +28,7 @@ import {
   type QuestionDomain,
 } from "@/data/questions";
 import { useUser } from "@/hooks/useUser";
+import ScaleDetails from "@/components/ScaleDetails";
 
 const FormQuestionnaire = () => {
   const { user } = useUser();
@@ -34,7 +37,44 @@ const FormQuestionnaire = () => {
   const [isCompleted, setIsCompleted] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [showDomainSelection, setShowDomainSelection] = useState(true);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [selectedDomainInfo, setSelectedDomainInfo] = useState<string | null>(
+    null
+  );
   const navigate = useNavigate();
+
+  // Thông tin chi tiết của từng thang đo
+  const domainDetails = {
+    bdi: {
+      title: "Thang Đo Trầm Cảm Beck (BDI - Beck Depression Inventory)",
+      content:
+        "Thang Đo Trầm Cảm Beck là một trong những công cụ tự đánh giá phổ biến và được công nhận rộng rãi nhất để đo lường mức độ trầm cảm. Được phát triển bởi nhà tâm thần học Aaron T. Beck vào năm 1961, BDI dựa trên lý thuyết nhận thức về trầm cảm, cho rằng những suy nghĩ tiêu cực về bản thân, thế giới và tương lai là cốt lõi của rối loạn này.",
+    },
+    dass21: {
+      title:
+        "Thang Đo Trầm Cảm - Lo Âu - Stress (DASS-21 - Depression, Anxiety and Stress Scales)",
+      content:
+        "DASS-21 là phiên bản rút gọn của thang đo DASS-42, được phát triển bởi các nhà nghiên cứu tại Đại học New South Wales, Úc. Điểm đặc biệt của DASS-21 là khả năng phân biệt giữa ba trạng thái cảm xúc tiêu cực thường đi kèm với nhau: Trầm cảm, Lo âu và Stress.",
+    },
+    phq9: {
+      title:
+        "Bộ Câu Hỏi Sức Khỏe Bệnh Nhân (PHQ-9 - Patient Health Questionnaire-9)",
+      content:
+        "PHQ-9 là một công cụ sàng lọc trầm cảm ngắn gọn và hiệu quả, được phát triển dựa trên các tiêu chuẩn chẩn đoán rối loạn trầm cảm chủ yếu của Cẩm nang Chẩn đoán và Thống kê các Rối loạn Tâm thần (DSM-IV). Nó được sử dụng rộng rãi trong các cơ sở chăm sóc sức khỏe ban đầu.",
+    },
+    sds: {
+      title:
+        "Thang Tự Đánh Giá Trầm Cảm Zung (SDS - Zung Self-Rating Depression Scale)",
+      content:
+        "Được phát triển bởi William W.K. Zung vào năm 1965, SDS là một thang đo tự báo cáo ngắn gọn được thiết kế để định lượng mức độ trầm cảm của bệnh nhân đã được chẩn đoán.",
+    },
+    hamd: {
+      title:
+        "Thang Đánh Giá Trầm Cảm Hamilton (HAM-D hoặc HDRS - Hamilton Depression Rating Scale)",
+      content:
+        'Khác với bốn thang đo trên, HAM-D không phải là thang tự đánh giá. Đây là một công cụ được thực hiện bởi bác sĩ lâm sàng hoặc nhà nghiên cứu đã qua đào tạo để đánh giá mức độ trầm cảm của bệnh nhân thông qua một cuộc phỏng vấn có cấu trúc. Được Max Hamilton công bố vào năm 1960, đây được coi là "tiêu chuẩn vàng" trong các thử nghiệm lâm sàng về thuốc chống trầm cảm.',
+    },
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -58,6 +98,16 @@ const FormQuestionnaire = () => {
     setCurrentQuestion(0);
     setAnswers({});
     setIsCompleted(false);
+  };
+
+  const handleShowInfo = (domainId: string) => {
+    setSelectedDomainInfo(domainId);
+    setShowInfoModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowInfoModal(false);
+    setSelectedDomainInfo(null);
   };
 
   // Domain Selection Screen
@@ -92,9 +142,9 @@ const FormQuestionnaire = () => {
             {questionDomains.map((domain) => (
               <Card
                 key={domain.id}
-                className="shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1"
+                className="shadow-xl border-0 bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 h-full flex flex-col"
               >
-                <CardContent className="p-0">
+                <CardContent className="p-0 flex flex-col h-full">
                   {/* Header with badge */}
                   <div className="relative">
                     <div
@@ -102,49 +152,22 @@ const FormQuestionnaire = () => {
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-800 mb-2 pr-4">
+                          <h3 className="text-xl font-bold text-gray-800 mb-2">
                             {domain.title}
                           </h3>
-                        </div>
-                        <div className="flex-shrink-0">
-                          {domain.iconType === "FileText" && (
-                            <FileText
-                              className={`w-8 h-8 text-${domain.color}-600`}
-                            />
-                          )}
-                          {domain.iconType === "Brain" && (
-                            <Brain
-                              className={`w-8 h-8 text-${domain.color}-600`}
-                            />
-                          )}
-                          {domain.iconType === "Heart" && (
-                            <Heart
-                              className={`w-8 h-8 text-${domain.color}-600`}
-                            />
-                          )}
-                          {domain.iconType === "Target" && (
-                            <Target
-                              className={`w-8 h-8 text-${domain.color}-600`}
-                            />
-                          )}
-                          {domain.iconType === "Clock" && (
-                            <Clock
-                              className={`w-8 h-8 text-${domain.color}-600`}
-                            />
-                          )}
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Content */}
-                  <div className="p-6">
+                  <div className="p-6 flex-1 flex flex-col">
                     <p className="text-gray-600 text-sm leading-relaxed mb-6">
                       {domain.description}
                     </p>
 
                     {/* Features */}
-                    <div className="space-y-3 mb-6">
+                    <div className="space-y-3 mb-6 flex-1">
                       <div className="flex items-center text-sm">
                         <div className="w-2 h-2 bg-gray-800 rounded-full mr-3"></div>
                         <span className="font-medium text-gray-700">
@@ -178,22 +201,21 @@ const FormQuestionnaire = () => {
                       </div>
                     </div>
 
+                    {/* Learn More Link */}
+                    <div className="mb-4">
+                      <button
+                        onClick={() => handleShowInfo(domain.id)}
+                        className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center space-x-1 transition-colors duration-200"
+                      >
+                        <Info className="w-4 h-4" />
+                        <span>Tìm hiểu thêm</span>
+                      </button>
+                    </div>
+
                     {/* Action Button */}
                     <Button
                       onClick={() => handleDomainSelect(domain.id)}
-                      className={`w-full h-12 bg-gradient-to-r ${
-                        domain.color === "blue"
-                          ? "from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
-                          : domain.color === "purple"
-                          ? "from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
-                          : domain.color === "emerald"
-                          ? "from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
-                          : domain.color === "amber"
-                          ? "from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
-                          : domain.color === "red"
-                          ? "from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
-                          : "from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700"
-                      } text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300`}
+                      className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 mt-auto"
                     >
                       Làm bài test
                     </Button>
@@ -217,6 +239,43 @@ const FormQuestionnaire = () => {
               </p>
             </div>
           </div>
+
+          {/* Info Modal */}
+          {showInfoModal && selectedDomainInfo && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-2xl">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-gray-800">
+                      Giới thiệu
+                    </h2>
+                    <button
+                      onClick={handleCloseModal}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors duration-200"
+                    >
+                      <X className="w-5 h-5 text-gray-600" />
+                    </button>
+                  </div>
+                </div>
+                <div className="p-6">
+                  <h3 className="text-lg font-bold text-blue-600 mb-4">
+                    {
+                      domainDetails[
+                        selectedDomainInfo as keyof typeof domainDetails
+                      ]?.title
+                    }
+                  </h3>
+                  <p className="text-gray-700 leading-relaxed text-justify">
+                    {
+                      domainDetails[
+                        selectedDomainInfo as keyof typeof domainDetails
+                      ]?.content
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -439,25 +498,25 @@ const FormQuestionnaire = () => {
               </p>
             </CardHeader>
 
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-6 grid md:grid-cols-2 gap-6">
               {/* Score Display */}
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-r from-blue-100 to-cyan-100 rounded-full mb-4 shadow-lg">
+                <div className="inline-flex items-center justify-center w-32 h-32 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full mb-6 shadow-2xl transform hover:scale-105 transition-all duration-300">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-gray-800">
+                    <div className="text-5xl font-bold text-white drop-shadow-lg">
                       {scores.total}
                     </div>
-                    <div className="text-xs text-gray-600">Tổng điểm</div>
+                    <div className="text-sm font-semibold text-blue-100">
+                      Tổng điểm
+                    </div>
                   </div>
                 </div>
 
                 <div
-                  className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full ${recommendation.bgColor} ${recommendation.borderColor} border mb-4`}
+                  className={`inline-flex items-center space-x-3 px-4 py-2 rounded-full ${recommendation.bgColor} ${recommendation.borderColor} border-2 mb-4 shadow-lg`}
                 >
-                  <span className="text-lg">{recommendation.icon}</span>
-                  <span
-                    className={`text-base font-semibold ${recommendation.color}`}
-                  >
+                  <span className="text-2xl">{recommendation.icon}</span>
+                  <span className={`text-lg font-bold ${recommendation.color}`}>
                     {recommendation.level}
                   </span>
                 </div>
@@ -475,25 +534,25 @@ const FormQuestionnaire = () => {
                       {recommendation.details.depression.level}
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-amber-50 to-amber-100 p-4 rounded-xl border border-amber-200">
-                    <div className="text-amber-600 font-semibold text-sm mb-1">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                    <div className="text-blue-600 font-semibold text-sm mb-1">
                       Lo âu
                     </div>
-                    <div className="text-2xl font-bold text-amber-800">
+                    <div className="text-2xl font-bold text-blue-800">
                       {scores.anxiety}
                     </div>
-                    <div className="text-xs text-amber-600">
+                    <div className="text-xs text-blue-600">
                       {recommendation.details.anxiety.level}
                     </div>
                   </div>
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
-                    <div className="text-purple-600 font-semibold text-sm mb-1">
+                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+                    <div className="text-blue-600 font-semibold text-sm mb-1">
                       Stress
                     </div>
-                    <div className="text-2xl font-bold text-purple-800">
+                    <div className="text-2xl font-bold text-blue-800">
                       {scores.stress}
                     </div>
-                    <div className="text-xs text-purple-600">
+                    <div className="text-xs text-blue-600">
                       {recommendation.details.stress.level}
                     </div>
                   </div>
@@ -504,73 +563,10 @@ const FormQuestionnaire = () => {
                 </p>
               </div>
 
-              {/* Next Steps */}
-              <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-6 rounded-2xl border border-blue-100">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
-                  <Heart className="w-5 h-5 text-blue-600 mr-2" />
-                  Bước tiếp theo để chăm sóc bản thân
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-start space-x-2">
-                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Brain className="w-3 h-3 text-blue-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-sm">
-                        Tư vấn chuyên gia
-                      </h4>
-                      <p className="text-xs text-gray-600">
-                        Nói chuyện với chuyên gia tâm lý
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-2">
-                    <div className="w-6 h-6 bg-cyan-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Heart className="w-3 h-3 text-cyan-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-sm">
-                        AI Assistant
-                      </h4>
-                      <p className="text-xs text-gray-600">
-                        Hỗ trợ tức thì từ AI
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-2">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Calendar className="w-3 h-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-sm">
-                        Đặt lịch 1:1
-                      </h4>
-                      <p className="text-xs text-gray-600">
-                        Buổi tư vấn riêng với chuyên gia
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-2">
-                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      <Users className="w-3 h-3 text-purple-600" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-800 text-sm">
-                        Cộng đồng hỗ trợ
-                      </h4>
-                      <p className="text-xs text-gray-600">
-                        Kết nối với những người cùng hoàn cảnh
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ScaleDetails domainId={selectedDomain} />
 
               {/* Action Buttons */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:col-span-2">
                 <Button
                   onClick={backToDomainSelection}
                   variant="outline"
@@ -592,12 +588,12 @@ const FormQuestionnaire = () => {
                   className="h-12 border-2 border-blue-200 text-blue-600 hover:bg-blue-50 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   <Calendar className="w-4 h-4 mr-2" />
-                  Đặt lịch chuyên gia
+                  Chat cùng chuyên gia
                 </Button>
               </div>
 
               {/* Disclaimer */}
-              <div className="bg-gray-50 p-3 rounded-xl border border-gray-200">
+              <div className="bg-gray-50 p-3 rounded-xl border border-gray-200 md:col-span-2">
                 <p className="text-xs text-gray-600 text-center">
                   <strong>Lưu ý:</strong> Kết quả này chỉ mang tính chất tham
                   khảo và không thay thế cho chẩn đoán y khoa chuyên nghiệp.

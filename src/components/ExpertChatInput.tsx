@@ -37,12 +37,22 @@ const ExpertChatInput = ({
     }
   };
 
-  const quickMessages = [
-    "Tôi cần lời khuyên về...",
-    "Tôi đang gặp khó khăn với...",
-    "Bạn có thể giúp tôi hiểu về...",
-    "Tôi muốn cải thiện...",
-  ];
+  const role = localStorage.getItem("role");
+
+  const quickMessages =
+    role === "expert"
+      ? [
+          "Chào bạn, tôi có thể giúp gì cho bạn?",
+          "Bạn có thể chia sẻ thêm về vấn đề của mình không?",
+          "Hãy bắt đầu bằng việc bạn cảm thấy thế nào nhé.",
+          "Tôi ở đây để lắng nghe bạn.",
+        ]
+      : [
+          "Tôi cần lời khuyên về...",
+          "Tôi đang gặp khó khăn với...",
+          "Bạn có thể giúp tôi hiểu về...",
+          "Tôi muốn cải thiện...",
+        ];
 
   return (
     <div className="border-t border-gray-200 bg-white">

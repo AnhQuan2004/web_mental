@@ -27,12 +27,8 @@ const LanguageSwitcher = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-24">
         <DropdownMenuItem
-          onClick={() => setLanguage('en')}
-          className={`cursor-pointer ${
-            language === 'en' 
-              ? 'bg-blue-50 text-blue-600 font-medium' 
-              : 'text-gray-600'
-          }`}
+          disabled
+          className="cursor-not-allowed text-gray-400 opacity-50"
         >
           EN
         </DropdownMenuItem>

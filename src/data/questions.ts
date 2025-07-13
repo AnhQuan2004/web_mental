@@ -1119,19 +1119,6 @@ export const questionDomains: QuestionDomain[] = [
     iconType: "FileText",
   },
   {
-    id: "phq9",
-    title: "Bộ Câu Hỏi Sức Khỏe Bệnh Nhân (PHQ-9)",
-    description:
-      "PHQ-9 là một công cụ sàng lọc trầm cảm ngắn gọn gồm 9 câu hỏi, được sử dụng rộng rãi để chẩn đoán và theo dõi mức độ trầm cảm trong các cơ sở chăm sóc sức khỏe ban đầu.",
-    questionCount: 9,
-    targetAudience: "Dân số chung, bệnh nhân chăm sóc sức khỏe ban đầu.",
-    purpose: "Sàng lọc và theo dõi trầm cảm.",
-    color: "emerald",
-    bgGradient: "from-emerald-50 to-emerald-100",
-    borderColor: "border-emerald-200",
-    iconType: "Heart",
-  },
-  {
     id: "dass21",
     title: "Thang Đo Trầm Cảm - Lo Âu - Stress (DASS-21)",
     description:
@@ -1143,6 +1130,19 @@ export const questionDomains: QuestionDomain[] = [
     bgGradient: "from-purple-50 to-purple-100",
     borderColor: "border-purple-200",
     iconType: "Brain",
+  },
+  {
+    id: "phq9",
+    title: "Bộ Câu Hỏi Sức Khỏe Bệnh Nhân (PHQ-9)",
+    description:
+      "PHQ-9 là một công cụ sàng lọc trầm cảm ngắn gọn gồm 9 câu hỏi, được sử dụng rộng rãi để chẩn đoán và theo dõi mức độ trầm cảm trong các cơ sở chăm sóc sức khỏe ban đầu.",
+    questionCount: 9,
+    targetAudience: "Dân số chung, bệnh nhân chăm sóc sức khỏe ban đầu.",
+    purpose: "Sàng lọc và theo dõi trầm cảm.",
+    color: "emerald",
+    bgGradient: "from-emerald-50 to-emerald-100",
+    borderColor: "border-emerald-200",
+    iconType: "Heart",
   },
   {
     id: "sds",
