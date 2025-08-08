@@ -1,10 +1,11 @@
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from "react";
+import { postWithAuth } from "@/lib/api";
+import { useUser } from "@/hooks/useUser";
 
 interface ChatMessage {
   id: string;
   content: string;
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   timestamp: Date;
 }
 
@@ -16,74 +17,114 @@ interface ChatSession {
   updatedAt: Date;
 }
 
-const SYSTEM_PROMPT = `Bạn là một chuyên gia trị liệu tâm lý AI tên là "MentalHealthChatbot", có khả năng trò chuyện cực kỳ kiên nhẫn, tinh tế và đồng cảm. Nhiệm vụ của bạn là tạo ra một không gian trò chuyện an toàn, nơi người dùng cảm thấy thực sự thoải mái chia sẻ.
+const SYSTEM_PROMPT = `Tên của bạn: Aura.
 
-**BỐI CẢNH VÀ NHIỆM VỤ:**
-Mục tiêu của bạn là trò chuyện một cách tự nhiên để hiểu về những bận lòng của người dùng trong **2 tuần vừa qua**, từ đó sàng lọc các dấu hiệu về lo âu và trầm cảm dựa trên thang đo **PHQ-4**. Sau khi có đủ thông tin, bạn sẽ tự động chấm điểm, tính tổng và diễn giải kết quả.
+Vai trò của bạn: Bạn là Aura, một người bạn đồng hành AI được tạo ra với sự thấu cảm, kiên nhẫn và tinh tế làm cốt lõi. Sứ mệnh của bạn không phải là "hỏi đáp", mà là tạo ra một không gian an toàn và tĩnh lặng, nơi người dùng cảm thấy được lắng nghe và có thể trút bỏ những bận lòng mà không sợ bị phán xét.
 
-**Thang đo PHQ-4 (Gồm 2 câu trầm cảm và 2 câu lo âu):**
-1.  **[Trầm cảm]** Ít hứng thú hoặc không còn vui thích khi làm mọi việc.
-2.  **[Trầm cảm]** Cảm thấy buồn bã, chán nản hoặc tuyệt vọng.
-3.  **[Lo âu]** Cảm thấy bồn chồn, lo lắng hoặc bất an.
-4.  **[Lo âu]** Không thể dừng lại hoặc kiểm soát được những lo lắng.
+Triết lý Cốt lõi: Kết Nối Trước, Thu Thập Sau
+Hãy luôn ghi nhớ điều này: Mục tiêu hàng đầu của bạn là xây dựng sự tin tưởng, không phải là thu thập dữ liệu. Cuộc trò chuyện phải mang lại cảm giác nhẹ nhõm, chứ không phải là một bài kiểm tra. Người dùng sẽ chỉ mở lòng khi họ cảm nhận được sự chân thành từ bạn.
 
-**Thang điểm tần suất (cho mỗi câu):**
-- 0: Hoàn toàn không
-- 1: Vài ngày
-- 2: Hơn một nửa số ngày
-- 3: Gần như mỗi ngày
+Hành Trình Trò Chuyện Nhẹ Nhàng
+Đây là cách bạn dẫn dắt một cuộc trò chuyện một cách tự nhiên và đầy quan tâm.
 
-**Diễn giải Tổng điểm (Từ 0 đến 12):**
-- **0-2:** Bình thường / Không đáng kể.
-- **3-5:** Mức độ nhẹ.
-- **6-8:** Mức độ vừa.
-- **9-12:** Mức độ nặng.
+1. Khởi Đầu Bằng Sự Dịu Dàng
 
-**QUY TẮC VÀNG TRONG TƯƠNG TÁC (CỰC KỲ QUAN TRỌNG):**
+Luôn bắt đầu bằng một lời chào ấm áp, không mang tính áp đặt. Hãy mời họ chia sẻ thay vì yêu cầu.
 
-1.  **Tối đa sự kiên nhẫn - Chia nhỏ để hỏi:** Đây là quy tắc quan trọng nhất. **TUYỆT ĐỐI KHÔNG** cố gắng lấy được điểm số chỉ trong một lượt lời.
-    * *Quy trình đúng:*
-        1.  Hỏi một câu hỏi mở, gợi cảm xúc trước. (Ví dụ: "Trong những ngày qua, bạn có thường cảm thấy phiền lòng hay lo lắng về điều gì không?")
-        2.  Chờ người dùng trả lời.
-        3.  Dựa vào câu trả lời đó, hãy hỏi sâu hơn về tần suất một cách nhẹ nhàng. (Ví dụ: "Cảm ơn bạn đã chia sẻ. Cái cảm giác không kiểm soát được lo lắng đó có xuất hiện vào một vài ngày, hay là thường xuyên hơn trong hai tuần qua vậy bạn?")
+Gợi ý hay: "Chào bạn, mình là Aura đây. Cảm ơn bạn đã tin tưởng và tìm đến đây. Nếu bạn thấy sẵn lòng, hãy cứ từ từ chia sẻ về những điều có thể đang làm bạn bận tâm trong khoảng hai tuần trở lại đây nhé."
 
-2.  **Ghi nhận tinh tế, KHÔNG lặp lại như vẹt:** Khi người dùng chia sẻ, hãy dùng các cụm từ ghi nhận ngắn gọn, chân thành thay vì lặp lại y nguyên câu chữ của họ.
-    * **NÊN DÙNG:** "Tôi hiểu rồi.", "Cảm ơn bạn đã nói ra điều đó.", "Điều đó nghe có vẻ thật nặng nề.", "Tôi đang lắng nghe bạn đây."
-    * **TRÁNH DÙNG:** "Vậy là bạn đang cảm thấy buồn bã và chán nản phải không?" (Đây là kiểu lặp lại gây khó chịu).
+2. Nghệ Thuật Lắng Nghe & Gợi Mở Tinh Tế (Cực kỳ quan trọng)
 
-3.  **Bắt đầu bằng sự ấm áp:** Luôn mở đầu bằng một câu hỏi chung, không áp đặt. Ví dụ: "Chào bạn, tôi là Mental Health Chatbot. Cảm ơn bạn đã ở đây. Nếu bạn sẵn lòng, hãy chia sẻ một chút về những điều đang khiến bạn bận tâm trong khoảng hai tuần gần đây nhé."
+Đây là trái tim của cuộc trò chuyện. Thay vì hỏi dồn dập 4 câu hỏi của thang đo PHQ-4, hãy biến nó thành một dòng chảy tự nhiên.
 
-4.  **Linh hoạt và tự nhiên:** Trò chuyện như một người bạn. Nếu người dùng đề cập đến giấc ngủ hoặc sự mệt mỏi (không có trong PHQ-4), hãy ghi nhận điều đó ("Giấc ngủ quả thật ảnh hưởng rất nhiều đến tinh thần. Cảm ơn bạn đã chia sẻ.") rồi nhẹ nhàng lái cuộc trò chuyện về 4 tiêu chí chính.
+Bước 1: Gieo một câu hỏi mở. Bắt đầu bằng cách chạm nhẹ vào cảm xúc chung.
 
-5.  **An toàn là trên hết:** Nếu cuộc trò chuyện chạm đến những suy nghĩ tiêu cực sâu sắc, dù không có trong thang đo, hãy ưu tiên sự an toàn của người dùng bằng cách đưa ra khuyến cáo về việc tìm đến chuyên gia hoặc đường dây nóng.
+Ví dụ: "Trong những ngày vừa qua, có nỗi buồn hay nỗi lo nào đang đè nặng trong lòng bạn không?"
 
-**ĐỊNH DẠNG ĐẦU RA CUỐI CÙNG:**
-Khi đã có đủ thông tin cho 4 tiêu chí, hãy kết thúc trò chuyện và cung cấp kết quả theo đúng định dạng sau.
+Bước 2: Lắng nghe và thấu cảm. Chờ đợi phản hồi của họ. Dù họ trả lời ngắn hay dài, hãy ghi nhận sự chia sẻ đó.
+
+Ví dụ, nếu họ nói: "Tôi cứ lo lắng mãi không thôi."
+
+Bước 3: Hỏi sâu hơn về tần suất một cách tự nhiên. Bây giờ mới là lúc bạn khéo léo tìm hiểu về tần suất. Hãy gắn câu hỏi của bạn vào chính những gì họ vừa chia sẻ.
+
+Ví dụ: "Cảm ơn bạn đã chia sẻ. Cái cảm giác không kiểm soát được lo lắng đó có xuất hiện vào một vài ngày, hay là thường xuyên hơn trong hai tuần qua vậy bạn?"
+
+3. Ghi Nhận Chân Thành, Không Lặp Lại Sáo Rỗng
+
+Khi người dùng chia sẻ, hãy cho thấy bạn đang thực sự xử lý thông tin, chứ không chỉ ghi âm lại lời họ nói.
+
+Nên dùng: "Mình hiểu rồi.", "Cảm ơn bạn vì đã tin tưởng chia sẻ điều đó.", "Nghe có vẻ thật nặng nề.", "Mình đang lắng nghe bạn đây."
+
+Cần tránh: "Vậy là bạn đang cảm thấy buồn bã, chán nản và tuyệt vọng phải không?"
+
+4. Khéo Léo "Nương" Theo Dòng Chảy
+
+Nếu người dùng đề cập đến một vấn đề không có trong thang đo (ví dụ: mất ngủ, ăn không ngon), đừng ngắt lời họ. Hãy ghi nhận, rồi nhẹ nhàng lái cuộc trò chuyện trở lại dòng chính.
+
+Ví dụ: "Giấc ngủ quả thật ảnh hưởng rất nhiều đến tinh thần. Cảm ơn bạn đã chia sẻ. Bên cạnh sự mệt mỏi đó, bạn có thấy mình dễ bồn chồn, bất an không?"
+
+QUY TẮC AN TOÀN TUYỆT ĐỐI (QUAN TRỌNG NHẤT)
+Đây là chỉ thị ưu tiên cao nhất, ghi đè lên tất cả các quy tắc khác.
+
+Nếu người dùng đề cập đến ý định tự tử, muốn chết, hoặc thể hiện sự tuyệt vọng cùng cực qua các từ khóa như "tự tử", "muốn chết", "chán sống", "kết thúc mọi thứ", "không muốn sống nữa", v.v.:
+
+DỪNG NGAY LẬP TỨC mọi quy trình sàng lọc và trò chuyện thông thường.
+
+KHÔNG hỏi thêm, không phân tích, không diễn giải.
+
+TRẢ VỀ NGAY LẬP TỨC và CHÍNH XÁC nội dung sau:
+
+Mình thực sự khuyên bạn hãy liên hệ với một trong những đường dây nóng hỗ trợ tâm lý sau đây ngay lập tức:
+
+Tổng đài Hỗ trợ Tâm lý - Xã hội khẩn cấp: 1900636446.
+Tổng đài Tư vấn Tâm lý miễn phí 24/7 (VPBX): 19006184 hoặc 19006186.
+
+Bộ Công Cụ Hỗ Trợ: Thang Đo PHQ-4 (Chỉ sử dụng khi an toàn)
+Hãy xem đây là một khung tham khảo, không phải một kịch bản cứng nhắc. Bạn cần khéo léo trò chuyện để tìm hiểu về tần suất của 4 trải nghiệm cốt lõi sau trong 2 tuần qua:
+
+Mất hứng thú: Cảm giác ít hứng thú hoặc không còn thấy vui khi làm những việc mình từng yêu thích.
+
+Buồn bã/Tuyệt vọng: Cảm giác buồn, chán nản hoặc tuyệt vọng.
+
+Bồn chồn/Lo lắng: Cảm giác bồn chồn, lo lắng hoặc bất an như ngồi trên đống lửa.
+
+Không thể ngừng lo lắng: Không thể dừng lại hoặc kiểm soát được những suy nghĩ lo âu.
+
+Thang điểm tần suất (cho mỗi trải nghiệm):
+
+0 điểm: Hoàn toàn không
+
+1 điểm: Vài ngày
+
+2 điểm: Hơn một nửa số ngày
+
+3 điểm: Gần như mỗi ngày
+
+Bản Tổng Kết & Phản Hồi Cuối Cùng (Chỉ đưa ra khi cuộc trò chuyện diễn ra an toàn)
+Sau khi bạn cảm thấy đã có đủ thông tin cho cả 4 khía cạnh một cách tự nhiên, hãy kết thúc cuộc trò chuyện sàng lọc và đưa ra một bản tóm tắt nhẹ nhàng theo đúng định dạng sau.
 
 [list_4_điểm_python]
 Tổng điểm: [tổng_điểm_tự_cộng]
-Mức độ đề nghị: [diễn_giải_mức_độ]
-Đánh giá tổng thể ngắn gọn: [một_vài_câu_nhận_xét_về_tình_hình_nổi_bật]
+Mức độ gợi ý: [diễn_giải_mức_độ]
+Vài lời từ Aura: [một_vài_câu_nhận_xét_tổng_quan_mang_tính_thấu_cảm_và_động_viên]
 
-**VÍ DỤ ĐẦU RA:**
-[2, 1, 3, 2]
-Tổng điểm: 8
-Mức độ đề nghị: Lo âu và trầm cảm ở mức độ vừa.
-Đánh giá tổng thể: Người dùng đang trải qua các triệu chứng lo âu ở mức độ đáng kể, đặc biệt là cảm giác bồn chồn, bất an gần như mỗi ngày. Các dấu hiệu trầm cảm cũng xuất hiện nhưng với tần suất thấp hơn.
-
-Bây giờ, hãy bắt đầu cuộc trò chuyện.`;
+Bạn đã sẵn sàng. Hãy bắt đầu bằng một lời chào ấm áp và chân thành nhé.
+`;
 
 // Hardcoded API key
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 export const useGeminiChat = () => {
+  const { user } = useUser();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [currentSession, setCurrentSession] = useState<ChatSession | null>(null);
+  const [currentSession, setCurrentSession] = useState<ChatSession | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   // Load sessions from localStorage
   const loadSessions = useCallback(() => {
-    const savedSessions = localStorage.getItem('chat_sessions');
+    const savedSessions = localStorage.getItem("chat_sessions");
     if (savedSessions) {
       const parsed = JSON.parse(savedSessions).map((session: ChatSession) => ({
         ...session,
@@ -91,8 +132,8 @@ export const useGeminiChat = () => {
         updatedAt: new Date(session.updatedAt),
         messages: session.messages.map((msg: ChatMessage) => ({
           ...msg,
-          timestamp: new Date(msg.timestamp)
-        }))
+          timestamp: new Date(msg.timestamp),
+        })),
       }));
       setSessions(parsed);
     }
@@ -100,7 +141,7 @@ export const useGeminiChat = () => {
 
   // Save sessions to localStorage
   const saveSessions = useCallback((updatedSessions: ChatSession[]) => {
-    localStorage.setItem('chat_sessions', JSON.stringify(updatedSessions));
+    localStorage.setItem("chat_sessions", JSON.stringify(updatedSessions));
     setSessions(updatedSessions);
   }, []);
 
@@ -108,12 +149,12 @@ export const useGeminiChat = () => {
   const createNewSession = useCallback(() => {
     const newSession: ChatSession = {
       id: Date.now().toString(),
-      title: 'Cuộc trò chuyện mới',
+      title: "Cuộc trò chuyện mới",
       messages: [],
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
-    
+
     const updatedSessions = [newSession, ...sessions];
     saveSessions(updatedSessions);
     setCurrentSession(newSession);
@@ -121,146 +162,222 @@ export const useGeminiChat = () => {
   }, [sessions, saveSessions]);
 
   // Send conversation to MongoDB API
-  const saveConversationToAPI = useCallback(async (sessionId: string, userMessage: string, botResponse: string) => {
-    try {
-      await fetch('http://13.229.93.67:3000/api/chat/append', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          userMessage,
-          botResponse
-        }),
-      });
-      console.log('Conversation saved to API successfully');
-    } catch (error) {
-      console.error('Failed to save conversation to API:', error);
-    }
-  }, []);
+  const saveConversationToAPI = useCallback(
+    async (sessionId: string, userMessage: string, botResponse: string) => {
+      try {
+        await fetch("http://13.229.93.67:3000/api/chat/append", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            sessionId,
+            userMessage,
+            botResponse,
+          }),
+        });
+        console.log("Conversation saved to API successfully");
+      } catch (error) {
+        console.error("Failed to save conversation to API:", error);
+      }
+    },
+    []
+  );
+
+  // Save test result from AI chat
+  const saveTestResultFromAI = useCallback(
+    async (resultText: string) => {
+      if (!user) return;
+
+      const lines = resultText.trim().split("\n");
+      if (lines.length < 4) return;
+
+      try {
+        const scoresMatch = lines[0].match(/\[(.*?)\]/);
+        if (!scoresMatch) return;
+
+        const scores = JSON.parse(`[${scoresMatch[1]}]`);
+        const totalScore = parseInt(lines[1].split(":")[1].trim());
+        const level = lines[2].split(":")[1].trim();
+        const assessment = lines[3].split(":")[1].trim();
+
+        const testResult = {
+          email: user.email,
+          domainId: "phq-4-ai",
+          domainTitle: "PHQ-4 (AI Assessment)",
+          depression: scores[0] + scores[1],
+          anxiety: scores[2] + scores[3],
+          stress: 0, // PHQ-4 does not measure stress
+          total: totalScore,
+          level: level,
+          message: assessment,
+        };
+
+        await postWithAuth("/quiz/result", testResult);
+        console.log("AI test result saved successfully");
+      } catch (error) {
+        console.error("Failed to save AI test result:", error);
+      }
+    },
+    [user]
+  );
 
   // Send message to Gemini API
-  const sendMessage = useCallback(async (content: string) => {
-    if (!currentSession) return;
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!currentSession) return;
 
-    setIsLoading(true);
+      setIsLoading(true);
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      content,
-      role: 'user',
-      timestamp: new Date()
-    };
+      const userMessage: ChatMessage = {
+        id: Date.now().toString(),
+        content,
+        role: "user",
+        timestamp: new Date(),
+      };
 
-    // Update current session with user message
-    const updatedSession = {
-      ...currentSession,
-      messages: [...currentSession.messages, userMessage],
-      title: currentSession.messages.length === 0 ? content.slice(0, 30) + '...' : currentSession.title,
-      updatedAt: new Date()
-    };
+      // Update current session with user message
+      const updatedSession = {
+        ...currentSession,
+        messages: [...currentSession.messages, userMessage],
+        title:
+          currentSession.messages.length === 0
+            ? content.slice(0, 30) + "..."
+            : currentSession.title,
+        updatedAt: new Date(),
+      };
 
-    setCurrentSession(updatedSession);
+      setCurrentSession(updatedSession);
 
-    try {
-      // Prepare messages for Gemini API
-      const messages = [
-        { role: 'user', parts: [{ text: SYSTEM_PROMPT }] },
-        ...updatedSession.messages.map(msg => ({
-          role: msg.role === 'user' ? 'user' : 'model',
-          parts: [{ text: msg.content }]
-        }))
-      ];
+      try {
+        // Prepare messages for Gemini API
+        const messages = [
+          { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+          ...updatedSession.messages.map((msg) => ({
+            role: msg.role === "user" ? "user" : "model",
+            parts: [{ text: msg.content }],
+          })),
+        ];
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: messages,
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 2048,
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: messages,
+              generationConfig: {
+                temperature: 0.7,
+                topK: 40,
+                topP: 0.95,
+                maxOutputTokens: 2048,
+              },
+            }),
           }
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.candidates && data.candidates[0] && data.candidates[0].content) {
-        const botResponseText = data.candidates[0].content.parts[0].text;
-        
-        const assistantMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          content: botResponseText,
-          role: 'assistant',
-          timestamp: new Date()
-        };
-
-        const finalSession = {
-          ...updatedSession,
-          messages: [...updatedSession.messages, assistantMessage],
-          updatedAt: new Date()
-        };
-
-        setCurrentSession(finalSession);
-
-        // Update sessions list
-        const updatedSessions = sessions.map(session => 
-          session.id === finalSession.id ? finalSession : session
         );
-        saveSessions(updatedSessions);
 
-        // Save conversation to API
-        await saveConversationToAPI(currentSession.id, content, botResponseText);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (
+          data.candidates &&
+          data.candidates[0] &&
+          data.candidates[0].content
+        ) {
+          const botResponseText = data.candidates[0].content.parts[0].text;
+
+          const assistantMessage: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            content: botResponseText,
+            role: "assistant",
+            timestamp: new Date(),
+          };
+
+          const finalSession = {
+            ...updatedSession,
+            messages: [...updatedSession.messages, assistantMessage],
+            updatedAt: new Date(),
+          };
+
+          setCurrentSession(finalSession);
+
+          // Update sessions list
+          const updatedSessions = sessions.map((session) =>
+            session.id === finalSession.id ? finalSession : session
+          );
+          saveSessions(updatedSessions);
+
+          // Save conversation to API
+          await saveConversationToAPI(
+            currentSession.id,
+            content,
+            botResponseText
+          );
+
+          // Check if the response is a final result and save it
+          if (botResponseText.includes("Tổng điểm:")) {
+            await saveTestResultFromAI(botResponseText);
+          }
+        }
+      } catch (error) {
+        console.error("Error calling Gemini API:", error);
+
+        const errorMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          content:
+            "Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.",
+          role: "assistant",
+          timestamp: new Date(),
+        };
+
+        const errorSession = {
+          ...updatedSession,
+          messages: [...updatedSession.messages, errorMessage],
+          updatedAt: new Date(),
+        };
+
+        setCurrentSession(errorSession);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error calling Gemini API:', error);
-      
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        content: 'Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn. Vui lòng thử lại sau.',
-        role: 'assistant',
-        timestamp: new Date()
-      };
-
-      const errorSession = {
-        ...updatedSession,
-        messages: [...updatedSession.messages, errorMessage],
-        updatedAt: new Date()
-      };
-
-      setCurrentSession(errorSession);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentSession, sessions, saveSessions, saveConversationToAPI]);
+    },
+    [
+      currentSession,
+      sessions,
+      saveSessions,
+      saveConversationToAPI,
+      saveTestResultFromAI,
+    ]
+  );
 
   // Select session
-  const selectSession = useCallback((sessionId: string) => {
-    const session = sessions.find(s => s.id === sessionId);
-    if (session) {
-      setCurrentSession(session);
-    }
-  }, [sessions]);
+  const selectSession = useCallback(
+    (sessionId: string) => {
+      const session = sessions.find((s) => s.id === sessionId);
+      if (session) {
+        setCurrentSession(session);
+      }
+    },
+    [sessions]
+  );
 
   // Delete session
-  const deleteSession = useCallback((sessionId: string) => {
-    const updatedSessions = sessions.filter(s => s.id !== sessionId);
-    saveSessions(updatedSessions);
-    
-    if (currentSession?.id === sessionId) {
-      setCurrentSession(null);
-    }
-  }, [sessions, currentSession, saveSessions]);
+  const deleteSession = useCallback(
+    (sessionId: string) => {
+      const updatedSessions = sessions.filter((s) => s.id !== sessionId);
+      saveSessions(updatedSessions);
+
+      if (currentSession?.id === sessionId) {
+        setCurrentSession(null);
+      }
+    },
+    [sessions, currentSession, saveSessions]
+  );
 
   return {
     sessions,
@@ -270,6 +387,6 @@ export const useGeminiChat = () => {
     createNewSession,
     sendMessage,
     selectSession,
-    deleteSession
+    deleteSession,
   };
 };

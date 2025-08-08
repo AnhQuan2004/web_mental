@@ -47,6 +47,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import Navbar from "@/components/Navbar";
 import { postWithAuth } from "@/lib/api";
+import ExpertRegistrationChat from "@/components/ExpertRegistrationChat";
 
 interface ExpertFormData {
   // Personal Information
@@ -73,7 +74,6 @@ interface ExpertFormData {
 
   // Profile & Availability
   bio: string;
-  approach: string;
   availability: string[];
   hourlyRate: string;
 
@@ -87,6 +87,7 @@ interface ExpertFormData {
 }
 
 const ExpertRegister = () => {
+  const [registrationMode, setRegistrationMode] = useState<"form" | "chatbot" | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<ExpertFormData>({
     fullName: "",
@@ -106,7 +107,6 @@ const ExpertRegister = () => {
     certifications: [],
     languages: [],
     bio: "",
-    approach: "",
     availability: [],
     hourlyRate: "",
     password: "",
@@ -229,6 +229,24 @@ const ExpertRegister = () => {
     "Chủ nhật",
   ];
 
+  const educationLevels = [
+    "Cử nhân",
+    "Thạc sĩ",
+    "Tiến sĩ",
+    "BSCKI",
+    "BSCKII",
+    "Giáo sư, Phó Giáo sư",
+  ];
+
+  const currentPositions = [
+    "Bác sĩ",
+    "Chuyên gia tâm lý",
+    "Tư vấn viên",
+    "Nhà nghiên cứu",
+    "Giảng viên",
+    "Khác",
+  ];
+
   const handleInputChange = (
     field: keyof ExpertFormData,
     value: string | boolean | string[]
@@ -276,9 +294,7 @@ const ExpertRegister = () => {
         if (!formData.experience)
           newErrors.experience = "Vui lòng nhập số năm kinh nghiệm";
         if (!formData.education.trim())
-          newErrors.education = "Vui lòng nhập trình độ học vấn";
-        if (!formData.licenseNumber.trim())
-          newErrors.licenseNumber = "Vui lòng nhập số giấy phép hành nghề";
+          newErrors.education = "Vui lòng chọn trình độ học vấn";
         break;
 
       case 3:
@@ -286,8 +302,6 @@ const ExpertRegister = () => {
           newErrors.bio = "Vui lòng nhập giới thiệu bản thân";
         if (formData.bio.length < 100)
           newErrors.bio = "Giới thiệu phải có ít nhất 100 ký tự";
-        if (!formData.approach.trim())
-          newErrors.approach = "Vui lòng mô tả phương pháp tư vấn";
         if (formData.languages.length === 0)
           newErrors.languages = "Vui lòng chọn ít nhất một ngôn ngữ";
         if (formData.availability.length === 0)
@@ -551,7 +565,7 @@ const ExpertRegister = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="licenseNumber">Số giấy phép hành nghề *</Label>
+                <Label htmlFor="licenseNumber">Số giấy phép hành nghề (Tùy chọn)</Label>
                 <Input
                   id="licenseNumber"
                   value={formData.licenseNumber}
@@ -559,40 +573,54 @@ const ExpertRegister = () => {
                     handleInputChange("licenseNumber", e.target.value)
                   }
                   placeholder="GP-12345"
-                  className={errors.licenseNumber ? "border-red-500" : ""}
                 />
-                {errors.licenseNumber && (
-                  <p className="text-red-500 text-sm">{errors.licenseNumber}</p>
-                )}
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="education">Trình độ học vấn *</Label>
-              <Textarea
-                id="education"
-                value={formData.education}
-                onChange={(e) => handleInputChange("education", e.target.value)}
-                placeholder="Ví dụ: Thạc sĩ Tâm lý học - Đại học Quốc gia Hà Nội (2015-2017)..."
-                rows={3}
-                className={errors.education ? "border-red-500" : ""}
-              />
-              {errors.education && (
-                <p className="text-red-500 text-sm">{errors.education}</p>
-              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
+                <Label htmlFor="education">Trình độ học vấn *</Label>
+                <Select
+                  value={formData.education}
+                  onValueChange={(value) => handleInputChange("education", value)}
+                >
+                  <SelectTrigger
+                    className={errors.education ? "border-red-500" : ""}
+                  >
+                    <SelectValue placeholder="Chọn trình độ học vấn" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {educationLevels.map((level) => (
+                      <SelectItem key={level} value={level}>
+                        {level}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.education && (
+                  <p className="text-red-500 text-sm">{errors.education}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="currentPosition">Vị trí hiện tại</Label>
-                <Input
-                  id="currentPosition"
+                <Select
                   value={formData.currentPosition}
-                  onChange={(e) =>
-                    handleInputChange("currentPosition", e.target.value)
+                  onValueChange={(value) =>
+                    handleInputChange("currentPosition", value)
                   }
-                  placeholder="Ví dụ: Trưởng khoa Tâm lý"
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn vị trí hiện tại" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentPositions.map((position) => (
+                      <SelectItem key={position} value={position}>
+                        {position}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
@@ -704,23 +732,6 @@ const ExpertRegister = () => {
                     <span className="text-red-500">{errors.bio}</span>
                   )}
                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="approach">Phương pháp tư vấn *</Label>
-                <Textarea
-                  id="approach"
-                  value={formData.approach}
-                  onChange={(e) =>
-                    handleInputChange("approach", e.target.value)
-                  }
-                  placeholder="Mô tả phương pháp, kỹ thuật tư vấn mà bạn sử dụng..."
-                  rows={3}
-                  className={errors.approach ? "border-red-500" : ""}
-                />
-                {errors.approach && (
-                  <p className="text-red-500 text-sm">{errors.approach}</p>
-                )}
               </div>
 
               <div className="space-y-2">
@@ -924,6 +935,43 @@ const ExpertRegister = () => {
         return null;
     }
   };
+
+  if (!registrationMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-2xl text-center shadow-2xl">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent mb-2">
+              Chọn phương thức đăng ký
+            </CardTitle>
+            <CardDescription className="text-lg text-gray-600">
+              Bạn muốn đăng ký bằng cách nào?
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid md:grid-cols-2 gap-6 p-8">
+            <Button
+              onClick={() => setRegistrationMode("form")}
+              className="h-auto py-6 text-lg bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600"
+            >
+              <FileText className="w-6 h-6 mr-3" />
+              Điền biểu mẫu
+            </Button>
+            <Button
+              onClick={() => setRegistrationMode("chatbot")}
+              className="h-auto py-6 text-lg bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600"
+            >
+              <Brain className="w-6 h-6 mr-3" />
+              Đăng ký với AI
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (registrationMode === "chatbot") {
+    return <ExpertRegistrationChat onBack={() => setRegistrationMode(null)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-cyan-50 relative overflow-hidden">

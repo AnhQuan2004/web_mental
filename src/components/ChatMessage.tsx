@@ -1,9 +1,10 @@
 import React from "react";
 import { User, Brain } from "lucide-react";
+import ChatResult from "./ChatResult";
 
 interface ChatMessageProps {
   message: {
-    id:string;
+    id: string;
     content: string;
     role: "user" | "assistant";
     timestamp: Date;
@@ -12,7 +13,36 @@ interface ChatMessageProps {
 }
 
 const ChatMessage = ({ message, isExpertView = false }: ChatMessageProps) => {
-  const isUser = isExpertView ? message.role === "assistant" : message.role === "user";
+  const isUser = isExpertView
+    ? message.role === "assistant"
+    : message.role === "user";
+
+  // Function to parse the special result format
+  const parseResult = (content: string) => {
+    const lines = content.trim().split("\n");
+    if (lines.length < 4) return null;
+
+    try {
+      const scoresMatch = lines[0].match(/\[(.*?)\]/);
+      if (!scoresMatch) return null;
+
+      const scores = JSON.parse(`[${scoresMatch[1]}]`);
+      const totalScore = parseInt(lines[1].split(":")[1].trim());
+      const level = lines[2].split(":")[1].trim();
+      const assessment = lines[3].split(":")[1].trim();
+
+      return { scores, totalScore, level, assessment };
+    } catch (error) {
+      console.error("Failed to parse chat result:", error);
+      return null;
+    }
+  };
+
+  const resultData = !isUser ? parseResult(message.content) : null;
+
+  if (resultData) {
+    return <ChatResult {...resultData} />;
+  }
 
   return (
     <div
